@@ -71,3 +71,26 @@ not used for verdicts.
 Whether PLE's structural deficit persists at reference-model scale / large data is an open question
 (Cycle 7 § Open questions). If more data shrinks it, blanket PLE becomes safer; if not, targeting stays
 essential.
+
+---
+
+## Outcome — Cycle 8 (REFUTED for the GRU)
+
+**Review verdict: `critique_wins`** (4 FATAL / 2 MATERIAL findings; all remediated in a hardened PoC
+before any real-data compute). **Empirical verdict: the claim is REFUTED for the sequence model.**
+
+- **Scope tightening (F6, applied):** the decisive test is **single-feature-at-a-time**. Multi-feature /
+  correlated co-encoding synergy is deferred to a follow-up, not part of this claim.
+- **Deficit reference (F4, revised):** `amount` was replaced by a **marginal-matched, exactly-log-adequate
+  reference feature** — `amount` is weakly-curved (Cycle 2) and marginal-mismatched, so it was a
+  contaminated deficit baseline.
+- **What the hardened PoC found:** the deficit-corrected curvature benefit is ≤ 0 at every curvature level
+  (never crosses zero); a free per-step nonlinearity (`dense`) also gains nothing (+0.004); and the small
+  oracle gap (+0.032) is closed by no arm. → **No per-step-value lever exists in a GRU**; its gates absorb
+  monotone curvature. Cycle 7's static-model lever does not transfer.
+- **Precondition: PASS** against a strong GBM+EWMA baseline (margin +0.056 CI-clear; order-shuffle drop
+  +0.236 CI-clear) — so this is a genuine refutation, not a moot one.
+- **Step 6 (real-data monotone-curvature targeting): not justified, not run.**
+
+See `CONCLUSIONS.md` (unified static-vs-recurrent × monotone-vs-non-monotone theory) and
+`REPORT_ADDENDUM.md` (deployment rule + the standing non-monotone real-data A/B).
