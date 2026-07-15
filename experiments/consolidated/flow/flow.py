@@ -1,7 +1,7 @@
 # /// script
 # requires-python = ">=3.10"
 # dependencies = [
-#   "torch>=2.8", "numpy", "scikit-learn", "metaflow>=2.19", "hydra-core", "omegaconf", "pyyaml",
+#   "torch>=2.8", "numpy", "scipy", "scikit-learn", "metaflow>=2.19", "hydra-core", "omegaconf", "pyyaml",
 # ]
 # ///
 """Consolidated numeric-encoding-capacity flow (cycles 1-8).
@@ -355,6 +355,17 @@ def bootstrap_ci(values, n_resamples: int = 1000, seed: int = 0):
     return float(v.mean()), float(np.percentile(boots, 2.5)), float(np.percentile(boots, 97.5))
 
 
+def paired_t_ci(diffs):
+    """Seed-level paired-t 95% CI (the estimand's documented interval; feeds the hard control gate)."""
+    from scipy import stats
+    d = np.asarray(diffs, float)
+    if len(d) < 2:
+        return float(d.mean()), float(d.mean()), float(d.mean())
+    m = d.mean(); se = d.std(ddof=1) / np.sqrt(len(d))
+    tc = float(stats.t.ppf(0.975, df=len(d) - 1))
+    return float(m), float(m - tc * se), float(m + tc * se)
+
+
 # ============================================================ conf + cell helpers
 def load_method_cfg(method_name: str) -> dict:
     import yaml
@@ -431,7 +442,7 @@ def deficit_corrected_lifts(records, seeds, bseed):
                             continue
                         diffs.append((a_c - l_c) - (a_0 - l_0))
                     if len(diffs) >= 2:
-                        m, lo, hi = bootstrap_ci(diffs, seed=bseed)
+                        m, lo, hi = paired_t_ci(diffs)      # seed-level paired-t (HYPOTHESIS §metric)
                         out.append({"arch": arch, "K": K, "condition": cond, "arm": arm,
                                     "dc_lift": round(m, 4), "ci_lo": round(lo, 4), "ci_hi": round(hi, 4),
                                     "ci_excludes_zero": bool(lo > 0 or hi < 0), "n": len(diffs)})
@@ -576,7 +587,16 @@ try:
 
         @step
         def end(self):
-            print(f"[end] determinism={self.determinism}", flush=True)
+            gate = self.analyses["an_controls"]["result"]
+            print(f"[end] determinism={self.determinism} | instrument={gate['verdict']}", flush=True)
+            if not gate["positive_control_fires"]:
+                from metaflow import MetaflowException
+                raise MetaflowException(
+                    f"POSITIVE CONTROL FAILED — {gate['verdict']}. Report + lift artifacts persisted "
+                    "for post-mortem, but GRU readings are NOT interpretable; run marked FAILED.")
+
+    if __name__ == "__main__":
+        ConsolidatedFlow()
 
 except ImportError:
     pass
