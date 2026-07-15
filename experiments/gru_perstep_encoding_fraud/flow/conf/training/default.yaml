@@ -1,0 +1,8 @@
+# Shared training knobs.
+gru_hidden: 32
+gru_epochs: 30
+gru_lr: 0.01
+gru_batch: 512
+gru_patience: 6
+dense_h: 16            # per-step Dense width for the `dense` arm
+logreg_max_iter: 2000

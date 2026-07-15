@@ -1,0 +1,15 @@
+{
+  "rebuttals": [
+    {"finding_id":"F1","original_severity":8,"rebuttal_type":"REBUT-DESIGN","adjusted_severity":4},
+    {"finding_id":"F2","original_severity":7,"rebuttal_type":"DEFER","adjusted_severity":7},
+    {"finding_id":"F3","original_severity":7,"rebuttal_type":"DEFER","adjusted_severity":7},
+    {"finding_id":"F4","original_severity":6,"rebuttal_type":"REBUT-DESIGN","adjusted_severity":3},
+    {"finding_id":"F5","original_severity":6,"rebuttal_type":"REBUT-SCOPE","adjusted_severity":3},
+    {"finding_id":"F6","original_severity":5,"rebuttal_type":"REBUT-SCOPE","adjusted_severity":2},
+    {"finding_id":"F7","original_severity":5,"rebuttal_type":"REBUT-SCOPE","adjusted_severity":2},
+    {"finding_id":"F8","original_severity":4,"rebuttal_type":"REBUT-EVIDENCE","adjusted_severity":0},
+    {"finding_id":"F9","original_severity":3,"rebuttal_type":"REBUT-IMMATERIAL","adjusted_severity":1},
+    {"finding_id":"F10","original_severity":2,"rebuttal_type":"REBUT-IMMATERIAL","adjusted_severity":2}
+  ],
+  "overall_verdict": "empirical_test_agreed"
+}

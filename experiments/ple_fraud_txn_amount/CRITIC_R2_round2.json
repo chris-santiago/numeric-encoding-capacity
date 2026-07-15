@@ -1,0 +1,13 @@
+{
+  "stage": "B.1", "round": 2, "all_accept": true,
+  "challenges": [
+    {"finding_id": "F1", "challenge_verdict": "ACCEPT", "updated_severity": 8, "reasoning": "DEFER maintained; logreg_quadratic settling arm; FATAL unresolved by argument."},
+    {"finding_id": "F2", "challenge_verdict": "ACCEPT", "updated_severity": 7, "reasoning": "DEFER maintained; logreg_ple_log settling arm; mismatch unresolved."},
+    {"finding_id": "F3", "challenge_verdict": "ACCEPT", "updated_severity": 3, "reasoning": "Conceded residual; conservative-bias holds; Step-6 saturation diagnostic in plan."},
+    {"finding_id": "F4", "challenge_verdict": "ACCEPT", "updated_severity": 3, "reasoning": "Conceded unit conflation; train-only la_std relabel check in plan."},
+    {"finding_id": "F5", "challenge_verdict": "ACCEPT", "updated_severity": 2, "reasoning": "'proxy' disclosure sufficient; hgb_ple required at Step 6."},
+    {"finding_id": "F6", "challenge_verdict": "ACCEPT", "updated_severity": 3, "reasoning": "Conceded coefficient-level confound; class_weight harmonization in plan."},
+    {"finding_id": "F7", "challenge_verdict": "ACCEPT", "updated_severity": 1, "reasoning": "Secondary metric; fixed budgets at Step 6."},
+    {"finding_id": "F8", "challenge_verdict": "ACCEPT", "updated_severity": 0, "reasoning": "Critic arithmetic error confirmed; ~10% rate matches README."}
+  ]
+}

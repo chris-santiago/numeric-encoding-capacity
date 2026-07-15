@@ -1,0 +1,215 @@
+{
+  "aggregate_results": [
+    {
+      "cell": {
+        "length": 32
+      },
+      "method": "all_periodic",
+      "pr_auc_hi": 0.173091123928762,
+      "pr_auc_lo": 0.11395751109689946,
+      "pr_auc_mean": 0.13813612210514015,
+      "pr_auc_seedmean": 0.13670140341329975,
+      "pr_auc_seedstd": 0.0043942689914809345
+    },
+    {
+      "cell": {
+        "length": 32
+      },
+      "method": "base_raw",
+      "pr_auc_hi": 0.17268957695407425,
+      "pr_auc_lo": 0.11605118578516747,
+      "pr_auc_mean": 0.13688920558492196,
+      "pr_auc_seedmean": 0.13483663951571837,
+      "pr_auc_seedstd": 0.006128111803585076
+    },
+    {
+      "cell": {
+        "length": 32
+      },
+      "method": "cyc_periodic",
+      "pr_auc_hi": 0.14946614493742139,
+      "pr_auc_lo": 0.10276707002503446,
+      "pr_auc_mean": 0.12084066571503095,
+      "pr_auc_seedmean": 0.11980595327771378,
+      "pr_auc_seedstd": 0.0019021484919470816
+    },
+    {
+      "cell": {
+        "length": 32
+      },
+      "method": "cyc_sincos",
+      "pr_auc_hi": 0.15438784386114732,
+      "pr_auc_lo": 0.10754208633442944,
+      "pr_auc_mean": 0.1268432344888459,
+      "pr_auc_seedmean": 0.12388881545873409,
+      "pr_auc_seedstd": 0.0021848673487095942
+    },
+    {
+      "cell": {
+        "length": 32
+      },
+      "method": "dt_periodic",
+      "pr_auc_hi": 0.1449853044360692,
+      "pr_auc_lo": 0.1016664515594828,
+      "pr_auc_mean": 0.119077989480663,
+      "pr_auc_seedmean": 0.12030679483838343,
+      "pr_auc_seedstd": 0.003746478583991084
+    },
+    {
+      "cell": {
+        "length": 32
+      },
+      "method": "tab_logreg",
+      "pr_auc_hi": 0.1795499515326196,
+      "pr_auc_lo": 0.11711905447028052,
+      "pr_auc_mean": 0.1426358604596205,
+      "pr_auc_seedmean": 0.1426358604596205,
+      "pr_auc_seedstd": 0.0
+    }
+  ],
+  "analyses": {
+    "periodic::encoding_check": {
+      "branch": "encoding_check",
+      "experiment": "periodic",
+      "rows": [
+        {
+          "length": 32,
+          "method": "all_periodic",
+          "pr_auc_mean": 0.13670140341329975
+        },
+        {
+          "length": 32,
+          "method": "base_raw",
+          "pr_auc_mean": 0.13483663951571837
+        },
+        {
+          "length": 32,
+          "method": "cyc_periodic",
+          "pr_auc_mean": 0.11980595327771378
+        },
+        {
+          "length": 32,
+          "method": "cyc_sincos",
+          "pr_auc_mean": 0.12388881545873409
+        },
+        {
+          "length": 32,
+          "method": "dt_periodic",
+          "pr_auc_mean": 0.12030679483838343
+        }
+      ]
+    },
+    "periodic::pr_auc_by_arm": {
+      "branch": "pr_auc_by_arm",
+      "experiment": "periodic",
+      "rows": [
+        {
+          "length": 32,
+          "method": "all_periodic",
+          "n_seeds": 3,
+          "pr_auc_mean": 0.13670140341329975,
+          "pr_auc_std": 0.0043942689914809345
+        },
+        {
+          "length": 32,
+          "method": "base_raw",
+          "n_seeds": 3,
+          "pr_auc_mean": 0.13483663951571837,
+          "pr_auc_std": 0.006128111803585076
+        },
+        {
+          "length": 32,
+          "method": "cyc_periodic",
+          "n_seeds": 3,
+          "pr_auc_mean": 0.11980595327771378,
+          "pr_auc_std": 0.0019021484919470816
+        },
+        {
+          "length": 32,
+          "method": "cyc_sincos",
+          "n_seeds": 3,
+          "pr_auc_mean": 0.12388881545873409,
+          "pr_auc_std": 0.0021848673487095942
+        },
+        {
+          "length": 32,
+          "method": "dt_periodic",
+          "n_seeds": 3,
+          "pr_auc_mean": 0.12030679483838343,
+          "pr_auc_std": 0.003746478583991084
+        },
+        {
+          "length": 32,
+          "method": "tab_logreg",
+          "n_seeds": 3,
+          "pr_auc_mean": 0.1426358604596205,
+          "pr_auc_std": 0.0
+        }
+      ]
+    }
+  },
+  "determinism": "single_worker",
+  "experiment": "periodic",
+  "lift_results": [
+    {
+      "cell": {
+        "length": 32
+      },
+      "ci_excludes_zero": false,
+      "lift_hi": 0.010395272373143053,
+      "lift_lo": -0.019776056850949093,
+      "lift_mean": -0.006002568773814956,
+      "pair": "cyc_periodic_minus_cyc_sincos"
+    },
+    {
+      "cell": {
+        "length": 32
+      },
+      "ci_excludes_zero": false,
+      "lift_hi": 0.005514149128093814,
+      "lift_lo": -0.02104460151137984,
+      "lift_mean": -0.007765245008182903,
+      "pair": "dt_periodic_minus_cyc_sincos"
+    },
+    {
+      "cell": {
+        "length": 32
+      },
+      "ci_excludes_zero": false,
+      "lift_hi": 0.0037542029120154726,
+      "lift_lo": -0.028788132833756613,
+      "lift_mean": -0.01004597109607605,
+      "pair": "cyc_sincos_minus_base_raw"
+    },
+    {
+      "cell": {
+        "length": 32
+      },
+      "ci_excludes_zero": false,
+      "lift_hi": 0.031073973929586184,
+      "lift_lo": -0.004471422118976389,
+      "lift_mean": 0.01129288761629424,
+      "pair": "all_periodic_minus_cyc_sincos"
+    },
+    {
+      "cell": {
+        "length": 32
+      },
+      "ci_excludes_zero": false,
+      "lift_hi": 0.0003158903209670991,
+      "lift_lo": -0.036470957567775096,
+      "lift_mean": -0.015792625970774604,
+      "pair": "cyc_sincos_minus_tab_logreg"
+    },
+    {
+      "cell": {
+        "length": 32
+      },
+      "ci_excludes_zero": true,
+      "lift_hi": -0.001644890288114376,
+      "lift_lo": -0.046002829944483986,
+      "lift_mean": -0.02179519474458956,
+      "pair": "cyc_periodic_minus_tab_logreg"
+    }
+  ]
+}

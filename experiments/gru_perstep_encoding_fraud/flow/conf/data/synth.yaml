@@ -1,0 +1,12 @@
+# Synthetic per-account sequence data. Δt + amount per step (log-normal). Regime/length are
+# experiment axes (set per cell). band = cross-feature-band burst; monotone = mean-log-amount.
+kind: synth
+target_pos: 0.09          # fraud-like base rate (also the precondition reference)
+n_train: 4000
+n_valid: 1200
+n_test: 3000
+n_bins: 16                # PLE quantile bins (fit on raw train values)
+amt_band: [3.0, 18.0]     # small-amount band (band regime)
+dt_band: [0.3, 6.0]       # short-Δt band, minutes (band regime)
+band_decay: 0.97          # recency-weighting of the band-match aggregation (leaky integrator, GRU-tractable)
+signal_amp: 2.8           # logit amplitude of the Δt/amount signal

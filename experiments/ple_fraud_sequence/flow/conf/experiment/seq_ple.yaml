@@ -1,0 +1,15 @@
+# Sequence PLE / amount-in-context experiment (locked Gate-1 design).
+# length is a DATA axis (changes the sequence tensor); foreach grain = (length, seed).
+name: seq_ple
+axes:
+  length: [8, 32]        # F5 length sweep
+data_axes: [length]
+methods: [tab_last, tab_aggregate, seq_raw, seq_ple, seq_dev, seq_raw_shuffle]
+method_overrides: {}
+split_convention: temporal
+diagnostics: [pr_auc_by_arm, lever_check]
+requests_model: false
+requests_scores: true     # seed-0 test scores for test-set bootstrap CIs
+# torch GRU on CPU: determinism claimed at a single worker (run-twice-identical with pinned
+# threads + fixed seeds). Cross-worker parallelism not asserted.
+determinism: single_worker

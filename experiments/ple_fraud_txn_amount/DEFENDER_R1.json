@@ -1,0 +1,15 @@
+{
+  "stage": "A.2",
+  "rebuttals": [
+    {"finding_id": "F1", "original_severity": 8, "rebuttal_type": "DEFER", "severity_adjustment": 0, "adjusted_severity": 8, "justification": "Strawman baseline is a real attribution gap. Settling arm: logreg_quadratic (log_amt + log_amt^2). Directional read (PLE beats raw-linear) survives either outcome; attribution deferred to Step 6."},
+    {"finding_id": "F2", "original_severity": 7, "rebuttal_type": "DEFER", "severity_adjustment": 0, "adjusted_severity": 7, "justification": "U-shape in log space, PLE on raw amount. Settling arm: logreg_ple_log (PLE on log_amount). If it wins, hypothesis is strengthened; conclusion not reversed."},
+    {"finding_id": "F3", "original_severity": 6, "rebuttal_type": "REBUT-DESIGN", "severity_adjustment": -4, "adjusted_severity": 2, "justification": "Drift saturation of top bins would SUPPRESS PLE in test -> conservative bias, can't inflate +0.559. Mild drift by design; real data eliminates the synthetic artifact at Step 6."},
+    {"finding_id": "F4", "original_severity": 5, "rebuttal_type": "REBUT-EVIDENCE", "severity_adjustment": -4, "adjusted_severity": 1, "justification": "Global la_std vs train-only mean differs ~0.045 std of log-amount; noise (std 1) dominates drift (0.21). Below the >=0.05 PR-AUC materiality threshold the critic itself set. One-line fix at Step 6."},
+    {"finding_id": "F5", "original_severity": 6, "rebuttal_type": "REBUT-SCOPE", "severity_adjustment": -4, "adjusted_severity": 2, "justification": "Labeled a 'proxy' (acknowledged approximation), not a measurement; hgb_ple is already a required Step 6 arm; interaction question explicitly carried forward as open."},
+    {"finding_id": "F6", "original_severity": 5, "rebuttal_type": "REBUT-SCOPE", "severity_adjustment": -3, "adjusted_severity": 2, "justification": "PR-AUC (primary) is rank-based and largely insensitive to class_weight calibration; the concern bites precision@k (secondary), already flagged for harmonization at Step 6."},
+    {"finding_id": "F7", "original_severity": 3, "rebuttal_type": "REBUT-IMMATERIAL", "severity_adjustment": -2, "adjusted_severity": 1, "justification": "Oracle-k is a secondary-metric limitation; PR-AUC primary; Step 6 uses fixed budgets."},
+    {"finding_id": "F8", "original_severity": 2, "rebuttal_type": "REBUT-EVIDENCE", "severity_adjustment": -2, "adjusted_severity": 0, "justification": "Critic arithmetic error: sigmoid(-5) ignores u=la_std^2 (mean ~1, +0.8), cat_extra*u (+0.5), drift (+0.3). Printed rate 0.098/0.110 ~10% matches README."}
+  ],
+  "overall_verdict": "empirical_test_agreed",
+  "verdict_rationale": "No concessions; F1(8)/F2(7) DEFER to planned Step 6 arms; F3-F8 rebutted to adj 0-2. Residual DEFERs above threshold => empirical_test_agreed."
+}

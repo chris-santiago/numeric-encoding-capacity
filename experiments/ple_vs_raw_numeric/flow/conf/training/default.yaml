@@ -1,0 +1,13 @@
+# Default training group — AUTHORITATIVE source for shared knobs.
+#
+# A method YAML carries only its defining params (kind, encoding, and the wide
+# arm's architecture); shared knobs live here so a per-experiment training override
+# is possible. n_bins / rff_dim are shared ENCODER knobs (PLE bin count, RFF dim),
+# kept here so both PLE arms and the RFF arm inherit one value.
+hidden_layers: [64, 64]   # fallback MLP architecture (mlp_raw_wide overrides)
+alpha: 0.0001             # MLP L2 regularization
+max_iter: 1000            # MLP cap (early stopping usually halts earlier; see T3)
+n_iter_no_change: 20      # MLP early-stopping patience
+logreg_max_iter: 1000     # logistic-regression solver cap
+n_bins: 24                # PLE quantile bins per feature
+rff_dim: 192              # random Fourier feature dimension (matches PLE input dim)

@@ -1,0 +1,3 @@
+# Trivial baseline (non-negotiable): logistic regression on raw standardized features.
+kind: logreg
+encoding: raw

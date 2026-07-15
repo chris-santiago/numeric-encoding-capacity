@@ -1,0 +1,14 @@
+# Shared training knobs. No class weighting (PR-AUC is rank-based).
+gru_hidden: 24
+gru_epochs: 15        # cap; early stopping on validation PR-AUC ends sooner
+gru_lr: 0.01
+gru_batch: 512
+gru_patience: 3       # early-stopping patience (epochs without val-PR-AUC improvement)
+logreg_max_iter: 2000
+# Learned periodic embedding (Gorishniy PLR): k freqs init N(0, sigma^2) -> sin/cos -> Linear -> ReLU.
+# sigma is the dominant knob (the PoC flagged frequencies move little from init); spot-checked.
+plr_k: 16
+plr_sigma: 2.0
+plr_out: 8            # PLR output width per encoded feature
+budget_fracs: [0.005, 0.01]   # precision@ top-0.5% / top-1%
+fpr_target: 0.01              # recall @ 1% FPR

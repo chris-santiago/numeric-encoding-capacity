@@ -1,0 +1,5 @@
+# T1 mechanism probe: logistic regression on PLE features.
+# If this gains like mlp_ple, PLE's benefit is general linearization (any model),
+# not an MLP-specific representational advantage. n_bins inherits from training.
+kind: logreg
+encoding: ple

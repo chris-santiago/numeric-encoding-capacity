@@ -1,0 +1,13 @@
+{
+  "stage": "B.1", "round": 1,
+  "challenges": [
+    {"finding_id": "F1", "challenge_verdict": "ACCEPT", "updated_severity": 8, "reasoning": "DEFER honest; logreg_quadratic is the exact proposed settling arm; attribution unresolved. Residual 8 appropriate."},
+    {"finding_id": "F2", "challenge_verdict": "ACCEPT", "updated_severity": 7, "reasoning": "DEFER honest; logreg_ple_log is the settling arm; log-space vs raw mismatch unresolved. Residual 7 appropriate."},
+    {"finding_id": "F3", "challenge_verdict": "PARTIAL", "updated_severity": 3, "reasoning": "Conservative-bias direction is sound (saturation suppresses, can't inflate PLE) but the top-bin resolution loss is real and unquantified; ->2 too aggressive, hold 3."},
+    {"finding_id": "F4", "challenge_verdict": "PARTIAL", "updated_severity": 3, "reasoning": "Unit conflation: 0.045 log-amount-std shift is not 0.045 PR-AUC; magnitude plausibly small but not demonstrated below threshold. ->1 too far, hold 3."},
+    {"finding_id": "F5", "challenge_verdict": "ACCEPT", "updated_severity": 2, "reasoning": "'proxy' label in code+docstring is sufficient disclosure; hgb_ple already required at Step 6."},
+    {"finding_id": "F6", "challenge_verdict": "PARTIAL", "updated_severity": 3, "reasoning": "PR-AUC is calibration-insensitive (correct) but class_weight='balanced' changes learned coefficients => ranking, not just calibration; cross-arm PR-AUC still partially confounded. ->2 too far, hold 3."},
+    {"finding_id": "F7", "challenge_verdict": "ACCEPT", "updated_severity": 1, "reasoning": "Secondary-metric limitation; PR-AUC primary; fixed-budget fix at Step 6. Proportionate."},
+    {"finding_id": "F8", "challenge_verdict": "ACCEPT", "updated_severity": 0, "reasoning": "Confirmed critic arithmetic error; printed rate ~10% matches README. REBUT-EVIDENCE correct."}
+  ]
+}

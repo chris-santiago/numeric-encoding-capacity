@@ -1,0 +1,14 @@
+# Master config — sequence PLE / amount-in-context on real account data.
+# Run:   uv run seq_flow.py --config-value cfg "hydra_overrides: [experiment=seq_ple]" run --max-workers 1
+# Smoke: uv run seq_flow.py --config-value cfg "hydra_overrides: [seeds=1,data.n_targets=4000,experiment.axes.length=[8]]" run --max-workers 1
+defaults:
+  - data: accounts
+  - experiment: seq_ple
+  - training: default
+  - _self_
+
+seeds: 3
+bootstrap:
+  n_resamples: 1000
+  seed: 0
+max_workers: 1

@@ -1,0 +1,13 @@
+{
+  "stage": "A.2",
+  "mode": "initial_defense",
+  "rebuttals": [
+    {"finding_id": "F1", "original_severity": 6, "rebuttal_type": "DEFER", "severity_adjustment": 0, "adjusted_severity": 6, "justification": "Absence of LR-PLE arm leaves mechanism ambiguous (general linearization vs MLP-specific). Empirically resolvable by adding one LR-PLE fit. Primary directional conclusion (PLE-MLP > raw-MLP) survives regardless; only mechanism attribution changes. DEFER over CONCEDE."},
+    {"finding_id": "F2", "original_severity": 6, "rebuttal_type": "REBUT-DESIGN", "severity_adjustment": -4, "adjusted_severity": 2, "justification": "Capacity confound explicitly acknowledged in PoC docstring and README, deliberately left in as a debate seed with Step 6 parameter-matched arm committed. PoC's stated purpose is a directional read, not a confound-free causal estimate. Staged-investigation design intent."},
+    {"finding_id": "F3", "original_severity": 5, "rebuttal_type": "DEFER", "severity_adjustment": 0, "adjusted_severity": 5, "justification": "Convergence unverified (n_iter_ not reported). Partial mitigation from early_stopping=True, but cannot confirm raw-MLP wasn't iteration-limited. Resolvable by reporting n_iter_ and rerunning with max_iter=1000. Magnitude of impact genuinely unknown."},
+    {"finding_id": "F4", "original_severity": 5, "rebuttal_type": "DEFER", "severity_adjustment": 0, "adjusted_severity": 5, "justification": "'Near-linear in PLE space' mechanism asserted but not measured. Theoretical coverage argument (~12 bins/period) is plausible but not a measurement. Resolvable by R^2 of linear model on PLE features vs latent logit. Directional read survives even if linearization is weak."},
+    {"finding_id": "F5", "original_severity": 2, "rebuttal_type": "REBUT-IMMATERIAL", "severity_adjustment": -2, "adjusted_severity": 0, "justification": "Noise-feature asymmetry is MINOR and of critic-acknowledged ambiguous direction. Second-order to the 4 informative features driving the +0.029 gap. Eligible for REBUT-IMMATERIAL."}
+  ],
+  "overall_verdict": "empirical_test_agreed",
+  "verdict_rationale": "Three DEFERs (F1, F3, F4) at adj_sev 5-6 route to empirical tests; F2 rebutted on design intent to adj_sev 2; F5 immaterial. No CONCEDE. Residual DEFERs above threshold => empirical_test_agreed, not defense_wins."
+}

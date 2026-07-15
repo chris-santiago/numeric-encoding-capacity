@@ -1,0 +1,4 @@
+# F5 interaction-gap arm: HistGradientBoosting, PLE on raw amount.
+# Gap = hgb_ple - hgb_raw answers "does PLE help once interactions are modeled?"
+kind: hgb
+amt_encoding: ple_raw

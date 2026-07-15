@@ -1,0 +1,3 @@
+# Trivial baseline: logistic regression, raw (log+std) amount.
+kind: logreg
+amt_encoding: raw

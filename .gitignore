@@ -1,0 +1,16 @@
+# Metaflow local run stores (large; regenerated on run)
+**/.metaflow/
+
+# Python caches
+**/__pycache__/
+*.py[cod]
+
+# Data lives outside the repo. data/ holds symlinks to the source datasets;
+# they are machine-specific absolute paths, so we don't commit them.
+# See README for how to recreate the symlinks.
+/data/
+
+# OS / editor cruft
+.DS_Store
+*~
+*.swp

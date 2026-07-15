@@ -1,0 +1,5 @@
+# GRU over per-step [raw amount, causal amount-deviation] + context. Sub-claim (a): does an
+# explicit deviation feature help over raw, or does the GRU already learn context from raw?
+kind: gru
+enc: dev
+shuffle: false

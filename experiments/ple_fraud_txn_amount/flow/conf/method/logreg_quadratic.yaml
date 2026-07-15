@@ -1,0 +1,3 @@
+# F1 attribution arm: logreg with [log_amt, log_amt^2] (a degree-2 polynomial basis).
+kind: logreg
+amt_encoding: quadratic

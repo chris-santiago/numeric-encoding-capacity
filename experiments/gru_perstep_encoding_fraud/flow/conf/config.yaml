@@ -1,0 +1,14 @@
+# Master config — per-step numeric encoding in an affine-input sequence GRU (cycle 6).
+# Run:   uv run perstep_flow.py --config-value cfg "hydra_overrides: [experiment=perstep]" run --max-workers 1
+# Smoke: uv run perstep_flow.py --config-value cfg "hydra_overrides: [seeds=1,experiment.axes.length=[32],data.n_train=800,data.n_valid=300,data.n_test=800]" run --max-workers 1
+defaults:
+  - data: synth
+  - experiment: perstep
+  - training: default
+  - _self_
+
+seeds: 5
+bootstrap:
+  n_resamples: 1000
+  seed: 0
+max_workers: 1

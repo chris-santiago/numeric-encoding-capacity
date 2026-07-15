@@ -1,0 +1,7 @@
+# T2 capacity control: MLP on raw features, first layer widened so total params
+# (~18.8k) EXCEED mlp_ple's (~16.6k). If mlp_ple still beats this strictly-larger
+# raw model, the gap is not explained by parameter count. hidden_layers is this
+# arm's defining property, so it is set here (not inherited).
+kind: mlp
+encoding: raw
+hidden_layers: [256, 64]

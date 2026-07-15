@@ -1,0 +1,2 @@
+# Precondition probe: logreg on the TRUE per-sequence band/monotone score. Diagnostic only.
+kind: oracle

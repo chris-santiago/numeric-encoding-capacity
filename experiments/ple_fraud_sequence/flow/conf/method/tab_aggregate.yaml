@@ -1,0 +1,5 @@
+# F2 precondition arm: logreg on [last amount, prior-amount mean, prior-amount std] (+ last context).
+# If this matches seq_raw, the sequence model is not earning its place for the amount signal.
+kind: tab
+enc: raw
+aggregate: true

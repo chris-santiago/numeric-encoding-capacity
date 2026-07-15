@@ -1,0 +1,14 @@
+# Per-step encoding experiment (locked Gate-1 design, cycle 6).
+# regime and length are DATA axes; foreach grain = (regime, length, seed).
+name: perstep
+axes:
+  regime: [band, monotone]
+  length: [32, 300]
+data_axes: [regime, length]
+equiv_margin: 0.005       # |CI| within this of 0 ⇒ arm declared equivalent to scalar
+methods: [raw, scalar, ple, dense, tab_logreg, oracle]
+method_overrides: {}
+split_convention: synthetic_iid
+diagnostics: [prauc_by_arm, controls]
+# torch GRU on CPU: determinism claimed at a single worker (run-twice-identical, pinned threads + seeds).
+determinism: single_worker

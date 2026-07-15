@@ -1,0 +1,24 @@
+# Real account-sequence fraud data group (cycle 4 — periodic time-feature embeddings).
+# make_data loads transactions.parq (full causal history), derives time features
+# (hour-of-day, day-of-week, log inter-transaction-minutes), builds causal per-account
+# sequences (each target = last L txns of its account incl. itself), subsamples targets per split.
+# Amount stays raw-log and context features are held fixed across arms; only the time encoding varies.
+kind: accounts
+dir: /Users/chrissantiago/Dropbox/GitHub/numeric-encoding-capacity/data/account-sequences
+transactions_file: transactions.parq   # full history — for causal sequence context
+train_file: train.parq                 # curated labeled TARGET sets (~7% fraud), provided temporal split
+valid_file: valid.parq
+test_file: test.parq
+key: accountNumber
+time_col: transactionDateTime
+amount_col: transactionAmount
+hour_col: transactionHour              # pre-derived hour-of-day (int8) in the data
+label_col: isFraud
+valid_start: "2016-09-01"              # train-period cutoff for causal scaler fits
+test_start: "2016-11-01"
+# per-step benign context, held FIXED across arms. *FraudTrend excluded (leakage); *Count kept.
+context_numeric: [transactionToAvailable, "normMerchantName-accountNumber60dCount"]
+context_bool: [cardPresent]
+n_targets_train: 12000
+n_targets_valid: 4000
+n_targets_test: 4000

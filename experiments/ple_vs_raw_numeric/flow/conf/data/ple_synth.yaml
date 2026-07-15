@@ -1,0 +1,16 @@
+# Synthetic numeric data group for the PLE investigation.
+# Maps to make_data(data_spec, data_axes, seed).
+#
+# split_convention: sequential
+#   A single RNG draws train then test from one stream (no validation set). The
+#   `target` data axis (set by the experiment) selects the logit form:
+#     nonmono -> sum_j amp_j * sin(freq_j * x_j)   (the hypothesis structure)
+#     linear  -> sum_j w_j * x_j                    (the falsification control)
+kind: ple_synth
+n_feat: 8              # total feature dimension
+n_informative: 4       # first n_informative features drive the target
+n_train: 5600
+n_test: 2400
+seed_base: 7000        # added to the per-branch seed before RNG construction
+target: nonmono        # default; the experiment's `target` data axis overrides this
+split_convention: sequential

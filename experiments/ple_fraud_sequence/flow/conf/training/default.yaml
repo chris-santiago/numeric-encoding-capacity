@@ -1,0 +1,10 @@
+# Shared training knobs. Imbalance handling harmonized: no class weighting (PR-AUC rank-based).
+n_bins: 24            # PLE quantile bins (causal: edges fit on TRAIN-period amounts only)
+gru_hidden: 24
+gru_epochs: 15        # cap; early stopping on validation PR-AUC ends sooner (F4 convergence)
+gru_lr: 0.01
+gru_batch: 512
+gru_patience: 3       # early-stopping patience (epochs without val-PR-AUC improvement)
+logreg_max_iter: 2000
+budget_fracs: [0.005, 0.01]   # precision@ top-0.5% / top-1%
+fpr_target: 0.01              # recall @ 1% FPR

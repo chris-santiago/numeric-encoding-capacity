@@ -1,0 +1,4 @@
+# GRU; cyclic features as LEARNED periodic (PLR), inter-txn time raw. H1 lever vs cyc_sincos.
+kind: gru
+cyc_enc: periodic
+dt_enc: raw

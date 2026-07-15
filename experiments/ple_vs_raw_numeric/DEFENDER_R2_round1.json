@@ -1,0 +1,14 @@
+{
+  "stage": "B.2",
+  "round": 1,
+  "is_final_round": false,
+  "rebuttals": [
+    {"finding_id": "F1", "original_severity": 6, "rebuttal_type": "DEFER", "severity_adjustment": 0, "adjusted_severity": 6, "justification": "LR-PLE arm absent; mechanism ambiguity (general linearization vs MLP-specific). Resolvable in Step 6. Directional read survives.", "r2_challenge_response": "MAINTAINED — accepted by critic-r2"},
+    {"finding_id": "F2", "original_severity": 6, "rebuttal_type": "DEFER", "severity_adjustment": -1, "adjusted_severity": 5, "justification": "Converted from REBUT-DESIGN (adj 2) to DEFER (adj 5). Disclosure of capacity confound reduces epistemic harm but does not control it; Step 6 parameter-matched arm planned-but-unrun = same structure as F1/F3. -1 credits explicit disclosure.", "r2_challenge_response": "CONCEDED — critic-r2 challenge accepted; REBUT-DESIGN -> DEFER"},
+    {"finding_id": "F3", "original_severity": 5, "rebuttal_type": "DEFER", "severity_adjustment": 0, "adjusted_severity": 5, "justification": "Convergence unverified (n_iter_ not reported). early_stopping partial mitigation only. Resolvable by reporting n_iter_ + rerun max_iter=1000.", "r2_challenge_response": "MAINTAINED — accepted by critic-r2"},
+    {"finding_id": "F4", "original_severity": 5, "rebuttal_type": "DEFER", "severity_adjustment": 0, "adjusted_severity": 5, "justification": "'Near-linear in PLE space' asserted not measured. Resolvable by R^2 of linear model on PLE features vs latent logit.", "r2_challenge_response": "MAINTAINED — accepted by critic-r2"},
+    {"finding_id": "F5", "original_severity": 2, "rebuttal_type": "REBUT-IMMATERIAL", "severity_adjustment": -2, "adjusted_severity": 0, "justification": "Noise asymmetry MINOR, ambiguous direction, second-order to informative signal.", "r2_challenge_response": "MAINTAINED — accepted by critic-r2"}
+  ],
+  "overall_verdict": "empirical_test_agreed",
+  "verdict_rationale": "Four DEFERs (F1=6, F2=5, F3=5, F4=5) route to Step 6 empirical tests; F5 immaterial. No CONCEDE. Directional result not in question; mechanism attribution and confound isolation deferred."
+}

@@ -1,0 +1,14 @@
+{
+  "stage": "B.2", "round": 1, "is_final_round": false,
+  "rebuttals": [
+    {"finding_id": "F1", "original_severity": 9, "rebuttal_type": "DEFER", "severity_adjustment": 0, "adjusted_severity": 9, "justification": "Synthetic saturation; sub-claim (a) unresolvable; harder-variant + real-data settling test.", "r2_challenge_response": "MAINTAINED"},
+    {"finding_id": "F2", "original_severity": 8, "rebuttal_type": "DEFER", "severity_adjustment": 0, "adjusted_severity": 8, "justification": "Strawman tab baseline; tab_aggregate settling test.", "r2_challenge_response": "MAINTAINED"},
+    {"finding_id": "F3", "original_severity": 7, "rebuttal_type": "DEFER", "severity_adjustment": -1, "adjusted_severity": 6, "justification": "Contamination conservative for seq_dev; PLE-edge sub-mechanism still open; causal-only refit settling test covers both. Accept critic 7->6.", "r2_challenge_response": "DEFERRED"},
+    {"finding_id": "F4", "original_severity": 6, "rebuttal_type": "DEFER", "severity_adjustment": 0, "adjusted_severity": 6, "justification": "Convergence unverified; loss-curve/plateau settling test.", "r2_challenge_response": "MAINTAINED"},
+    {"finding_id": "F5", "original_severity": 5, "rebuttal_type": "DEFER", "severity_adjustment": 0, "adjusted_severity": 5, "justification": "Length-dependence; L sweep settling test.", "r2_challenge_response": "MAINTAINED"},
+    {"finding_id": "F6", "original_severity": 3, "rebuttal_type": "REBUT-SCOPE", "severity_adjustment": -3, "adjusted_severity": 0, "justification": "iid appropriate for stationary synthetic; temporal split mandated for Step 6.", "r2_challenge_response": "MAINTAINED"},
+    {"finding_id": "F7", "original_severity": 2, "rebuttal_type": "REBUT-IMMATERIAL", "severity_adjustment": -2, "adjusted_severity": 0, "justification": "Cosmetic; iid -> identical figure.", "r2_challenge_response": "MAINTAINED"}
+  ],
+  "overall_verdict": "empirical_test_agreed",
+  "verdict_rationale": "F1-F5 DEFER (9/8/6/6/5) to named Step-6 tests; F6/F7 rebutted; no concessions."
+}

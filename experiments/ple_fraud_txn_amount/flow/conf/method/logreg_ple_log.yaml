@@ -1,0 +1,3 @@
+# F2 encoding-space arm: logreg with PLE on log-amount.
+kind: logreg
+amt_encoding: ple_log

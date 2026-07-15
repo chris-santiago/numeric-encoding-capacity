@@ -1,0 +1,3 @@
+# GRU on per-step [std RAW amount, std RAW Δt] (no log) — conditioning baseline for the four-way.
+kind: gru
+enc: raw

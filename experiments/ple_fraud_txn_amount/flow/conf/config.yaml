@@ -1,0 +1,14 @@
+# Master config for the IEEE-CIS PLE-on-amount flow.
+# Run:  uv run fraud_flow.py --config-value cfg "hydra_overrides: [experiment=ple_fraud]" run
+# Smoke: uv run fraud_flow.py --config-value cfg "hydra_overrides: [seeds=2,data.n_rows=40000]" run
+defaults:
+  - data: ieee_cis
+  - experiment: ple_fraud
+  - training: default
+  - _self_
+
+seeds: 5
+bootstrap:
+  n_resamples: 1000
+  seed: 0
+max_workers: 4

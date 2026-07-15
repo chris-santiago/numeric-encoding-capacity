@@ -1,0 +1,12 @@
+{
+  "stage": "B.1",
+  "round": 2,
+  "challenges": [
+    {"finding_id": "F1", "challenge_verdict": "ACCEPT", "updated_severity": 6, "reasoning": "DEFER@6 maintained and sound; LR-PLE arm absent; settling test specified."},
+    {"finding_id": "F2", "challenge_verdict": "ACCEPT", "updated_severity": 5, "reasoning": "Defender converted REBUT-DESIGN->DEFER@5 as requested in round 1; -1 disclosure credit proportionate; structurally identical to F1/F3."},
+    {"finding_id": "F3", "challenge_verdict": "ACCEPT", "updated_severity": 5, "reasoning": "DEFER@5 maintained; convergence unverified; n_iter_ + max_iter=1000 test specified."},
+    {"finding_id": "F4", "challenge_verdict": "ACCEPT", "updated_severity": 5, "reasoning": "DEFER@5 maintained; linearization asserted not measured; R^2-on-latent-logit test specified."},
+    {"finding_id": "F5", "challenge_verdict": "ACCEPT", "updated_severity": 0, "reasoning": "REBUT-IMMATERIAL@0 maintained; ambiguous direction, second-order magnitude."}
+  ],
+  "all_accept": true
+}

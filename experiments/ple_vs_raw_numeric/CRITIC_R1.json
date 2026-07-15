@@ -1,0 +1,56 @@
+{
+  "findings": [
+    {
+      "finding_id": "F1",
+      "severity": 6,
+      "severity_label": "MATERIAL",
+      "suppressed": false,
+      "claim": "The +0.029 AUC gap is attributable to PLE's representational advantage for non-monotonic targets, not to a general feature-space linearization that any model could exploit.",
+      "failure_mechanism": "The PoC includes no logistic regression on PLE features (LR-PLE arm). If LR-PLE also substantially beats LR-raw on this target, the mechanism is simply 'PLE linearizes the target signal well enough for linear models' — not the specific 'MLP exploits bin-aware inflection points' story the hypothesis claims. In that case the +0.029 is still real but the cited mechanism is wrong: PLE is doing feature engineering, not enabling a specifically neural representational advantage. Conversely, if LR-PLE does not beat LR-raw but PLE-MLP does, the mechanism is genuinely non-linear. Without this arm, the experiment cannot distinguish these two interpretations.",
+      "evidence_test": "Add LR-PLE to the PoC. If LR-PLE AUC exceeds LR-raw by a comparable margin to PLE-MLP vs raw-MLP, the mechanism is feature linearization (accessible to any model); the MLP-specific mechanism claim is unsupported. If LR-PLE barely beats LR-raw while PLE-MLP shows large gains, the MLP-specific mechanism is plausible.",
+      "flaw_category": "missing_baselines"
+    },
+    {
+      "finding_id": "F2",
+      "severity": 6,
+      "severity_label": "MATERIAL",
+      "suppressed": false,
+      "claim": "The +0.029 AUC gap reflects PLE's non-monotonic representational advantage rather than the PLE-MLP simply being a larger, differently-regularized model.",
+      "failure_mechanism": "PLE-MLP's first layer is 192x64 (12,288 weights) vs raw-MLP's 8x64 (512 weights) — a 24x parameter count difference in the most consequential layer. Both use alpha=1e-4 L2 regularization per weight, so the total regularization force on PLE-MLP's first layer is 24x greater in absolute magnitude, but the effective regularization per input direction is unchanged while the model's capacity to fit the training data is substantially higher. The README frames this as a 'debate seed for Step 6' but the framing understates the consequence: a model that is 24x wider in its first layer on a task with 5,040 training samples should be expected to outperform a 24x narrower model on this task by a margin consistent with the observed gap, purely from capacity, even if PLE's structure conferred zero representational advantage. The PoC's conclusion that PLE beats raw cannot be separated from 'larger model beats smaller model' without the parameter-matched arm.",
+      "evidence_test": "The parameter-matched arm planned for Step 6 (raw-MLP with 192 or 8*24=192 input features via, e.g., random Fourier features or by duplicating raw features 24 times) is the correct test. If a capacity-matched raw model (same first-layer width) achieves comparable AUC to PLE-MLP, the gap is capacity-driven. If PLE-MLP still wins by a meaningful margin over the capacity-matched raw model, representational structure is doing real work.",
+      "flaw_category": "eval_inflation"
+    },
+    {
+      "finding_id": "F3",
+      "severity": 5,
+      "severity_label": "MATERIAL",
+      "suppressed": false,
+      "claim": "Both MLPs trained to comparable optimization quality, so the AUC comparison reflects representational difference rather than one model being optimization-limited.",
+      "failure_mechanism": "sklearn's MLPClassifier emits a ConvergenceWarning if max_iter is reached before early stopping triggers — but this warning is printed to stderr and is not captured or reported anywhere in the PoC output. If raw-MLP hit max_iter=300 while PLE-MLP converged via early stopping, the comparison is between a converged model and an iteration-limited one. This is a plausible silent misconfig: on the 192-dimensional PLE input, the Adam optimizer likely finds a shorter optimization path to a flat region (the loss landscape over a well-structured feature space should be easier to navigate), while on the 8-dimensional raw input with oscillatory sine targets, Adam may require more iterations to fit the non-monotonic mapping. The PoC does not report n_iter_ for either model.",
+      "evidence_test": "After fitting, check mlp_raw.n_iter_ and mlp_ple.n_iter_. If mlp_raw.n_iter_ equals max_iter=300 and mlp_ple.n_iter_ is substantially lower (stopped by early stopping), the +0.029 reflects a partially-trained raw-MLP. Rerun with max_iter=1000 or 2000 and check whether the gap changes. A gap that narrows substantially with more iterations implicates optimization rather than representation.",
+      "flaw_category": "silent_misconfig"
+    },
+    {
+      "finding_id": "F4",
+      "severity": 5,
+      "severity_label": "MATERIAL",
+      "suppressed": false,
+      "claim": "PLE with 24 quantile bins transforms the sine-based non-monotonic target into a representation that is 'near-linear in PLE space,' as the hypothesis mechanism requires.",
+      "failure_mechanism": "The hypothesis mechanism depends on PLE bin boundaries acting as cheap inflection points that align with the target's non-monotonic structure. For quantile bins over X ~ N(0,1), bin boundaries are placed at the quantiles of the standard normal — uniformly spaced in CDF space, but non-uniformly in feature-value space, denser near 0 and sparser in the tails. The sine target's inflection points occur at x = pi*k/freq for each informative feature. With freqs drawn from U(1.5, 3.0), inflection points range and the period varies. For a standard normal feature, the quantile bin boundaries are determined by the normal CDF, not by the sine's periodicity. There is no guarantee that 24 quantile bins provide adequate resolution at the sine's inflection points — particularly in the tails where data is sparse. The claim that 'non-monotonic thresholds become near-linear in PLE space' is stated as the mechanism but is never measured: the PoC provides no R^2 of a linear model on PLE features, no mutual information gain, and no visualization of how well PLE-space linearizes the target.",
+      "evidence_test": "Compute R^2 of linear regression on PLE features vs. linear regression on raw features, using the latent logit as the target (before Bernoulli sampling). If PLE-space R^2 is substantially higher, the linearization argument holds. If not, PLE's advantage in the MLP comes from something other than target linearization — potentially just capacity or optimization.",
+      "flaw_category": "unverified_prereqs"
+    },
+    {
+      "finding_id": "F5",
+      "severity": 2,
+      "severity_label": "MINOR",
+      "suppressed": false,
+      "claim": "The four noise features (features 4-7) are comparably handled by raw-MLP and PLE-MLP and do not create an asymmetric regularization burden that affects the AUC comparison.",
+      "failure_mechanism": "PLE encodes each noise feature with 24 bins, adding 4*24=96 noise-feature activations to the PLE-MLP's first layer (vs 4 scalar noise inputs for raw-MLP). These 96 activations are not zero — they are smooth ramp functions of pure noise. With fixed alpha=1e-4 L2 per weight, the optimizer must suppress 24x more noise weights per noise feature in PLE-MLP's first layer. Whether this systematically hurts PLE or helps it is not analyzed. The direction is ambiguous, but the effect is asymmetric and unexamined.",
+      "evidence_test": "Run both models with D_INFORMATIVE=8 (all features informative, no noise features). If the PLE-raw AUC gap narrows substantially, the noise-feature asymmetry was contributing to the observed advantage.",
+      "flaw_category": "uncertain_significance"
+    }
+  ],
+  "summary": "The PoC demonstrates a real +0.029 AUC gap but provides no evidence it reflects PLE's claimed representational mechanism rather than three confounded explanations: PLE-MLP is a 24x-wider model in its critical first layer (capacity confound, acknowledged but severity understated), no LR-PLE baseline exists to test whether target linearization is mechanism-specific to MLPs or accessible to any model, and raw-MLP convergence is not verified — it may have been iteration-limited while PLE-MLP converged cleanly. All three of these alternative explanations are consistent with the observed gap and none is currently ruled out.",
+  "no_material_findings": false
+}

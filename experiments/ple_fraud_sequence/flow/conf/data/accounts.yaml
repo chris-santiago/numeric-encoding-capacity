@@ -1,0 +1,25 @@
+# Real account-sequence fraud data group.
+# make_data loads transactions.parq (full history), assigns split by transactionDateTime,
+# builds causal per-account sequences (each target = last L txns of its account incl. itself),
+# subsamples targets to n_targets per split. Sequence length L is the experiment 'length' axis.
+kind: accounts
+dir: /Users/chrissantiago/Dropbox/GitHub/numeric-encoding-capacity/data/account-sequences
+transactions_file: transactions.parq   # full history (786k, ~1.6% fraud) — for sequence context
+# curated labeled TARGET sets (~7% fraud) with provided temporal split — what we actually score
+train_file: train.parq
+valid_file: valid.parq
+test_file: test.parq
+key: accountNumber
+time_col: transactionDateTime
+amount_col: transactionAmount
+label_col: isFraud
+# split boundaries (match the provided train/valid/test.parq windows)
+valid_start: "2016-09-01"
+test_start: "2016-11-01"
+# per-step benign context features (NON target-derived). *FraudTrend excluded; *Count kept.
+context_numeric: [transactionToAvailable, "normMerchantName-accountNumber60dCount"]
+context_bool: [cardPresent]
+# target subsample caps per split (runtime control)
+n_targets_train: 12000
+n_targets_valid: 4000
+n_targets_test: 4000

@@ -1,0 +1,22 @@
+# Master config for the PLE-vs-raw-numeric flow.
+#
+# Run:
+#   uv run ple_flow.py --config-value cfg "hydra_overrides: [experiment=ple_vs_raw]" run
+# Smoke run (fewer seeds, smaller data):
+#   uv run ple_flow.py --config-value cfg "hydra_overrides: [seeds=2,data.n_train=2000,data.n_test=1000]" run
+#
+# The method/ group is NOT a Hydra default: methods are named in the experiment's
+# `methods:` list and loaded by name from conf/method/<name>.yaml by the flow.
+defaults:
+  - data: ple_synth
+  - experiment: ple_vs_raw
+  - training: default
+  - _self_
+
+# Global knobs
+seeds: 10
+bootstrap:
+  n_resamples: 1000
+  seed: 0
+# Hint for Metaflow --max-workers; not enforced by the flow.
+max_workers: 8

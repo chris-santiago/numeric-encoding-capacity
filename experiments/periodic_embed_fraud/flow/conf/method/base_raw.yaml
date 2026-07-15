@@ -1,0 +1,4 @@
+# GRU; all time features as raw scalars (hour/24, dow/7, std log-dt). Reference (no time encoding).
+kind: gru
+cyc_enc: raw      # hour-of-day, day-of-week
+dt_enc: raw       # log inter-transaction time

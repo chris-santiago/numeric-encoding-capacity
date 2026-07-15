@@ -1,0 +1,11 @@
+{
+  "stage": "B.1",
+  "round": 1,
+  "challenges": [
+    {"finding_id": "F1", "challenge_verdict": "ACCEPT", "updated_severity": 6, "reasoning": "DEFER sound; LR-PLE settling test well-specified; adj_sev 6 honest (fully open). No padding/evasion."},
+    {"finding_id": "F2", "challenge_verdict": "CHALLENGE", "updated_severity": 5, "reasoning": "REBUT-DESIGN restates the flaw as a feature. Capacity confound is the single most plausible alternative explanation for +0.029 and is uncontrolled; Step 6 arm not yet run. 'Documented + deferred' defers the finding (like F1/F3) rather than resolving it; -4 to adj_sev 2 is disproportionate. Correct disposition is DEFER at adj_sev 5-6. Hold at 5 (one point off original, crediting that it is documented not hidden), reject reduction to 2."},
+    {"finding_id": "F3", "challenge_verdict": "ACCEPT", "updated_severity": 5, "reasoning": "DEFER honest; early_stopping partial mitigation acknowledged; n_iter_ + max_iter=1000 test sound; adj_sev 5 appropriate."},
+    {"finding_id": "F4", "challenge_verdict": "ACCEPT", "updated_severity": 5, "reasoning": "DEFER fair; coverage heuristic admitted as not-a-measurement; R^2-on-latent-logit settling test specific; severity 5 maintained."},
+    {"finding_id": "F5", "challenge_verdict": "ACCEPT", "updated_severity": 0, "reasoning": "REBUT-IMMATERIAL valid; direction ambiguous by original admission; magnitude small vs informative signal; adj_sev 0 proportionate."}
+  ]
+}

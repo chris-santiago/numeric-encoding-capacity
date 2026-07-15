@@ -1,0 +1,2 @@
+# Trivial baseline: logreg on generic sequence aggregates (mean/std/min/max of log amount & log Δt).
+kind: tab

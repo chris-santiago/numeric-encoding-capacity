@@ -1,0 +1,6 @@
+# T2 basis control: MLP on random Fourier features. rff_dim (192) matches PLE's
+# input dimensionality and total param count exactly, but the basis is global and
+# periodic, not bin-local. If mlp_ple beats this, the advantage is PLE's specific
+# structure, not dimensionality. rff_dim and architecture inherit from training.
+kind: mlp
+encoding: rff

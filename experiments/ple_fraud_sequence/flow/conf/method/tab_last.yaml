@@ -1,0 +1,4 @@
+# Trivial baseline: logreg on the last-step raw amount (+ last-step context), no sequence.
+kind: tab
+enc: raw
+aggregate: false

@@ -1,0 +1,4 @@
+# GRU over per-step raw (std log) amount + context. Reference sequence arm.
+kind: gru
+enc: raw
+shuffle: false

@@ -1,0 +1,4 @@
+# GRU; cyclic as fixed sin/cos, inter-txn time as LEARNED periodic (PLR). H2 lever vs cyc_sincos.
+kind: gru
+cyc_enc: sincos
+dt_enc: periodic

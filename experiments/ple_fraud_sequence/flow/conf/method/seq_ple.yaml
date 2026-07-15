@@ -1,0 +1,4 @@
+# GRU over per-step PLE(amount) bins + context. Sub-claim (b): does PLE help the GRU?
+kind: gru
+enc: ple
+shuffle: false

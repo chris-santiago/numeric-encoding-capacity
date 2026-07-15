@@ -1,0 +1,5 @@
+# GRU; cyclic features as FIXED sin/cos (periods 24, 7), inter-txn time raw. = reference encoding.
+# Serves as the matched raw-dt baseline for H1 and H2.
+kind: gru
+cyc_enc: sincos
+dt_enc: raw

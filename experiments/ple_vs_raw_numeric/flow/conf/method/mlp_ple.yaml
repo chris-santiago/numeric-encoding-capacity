@@ -1,0 +1,4 @@
+# The hypothesis arm: MLP on PLE features. Architecture (64, 64) and n_bins inherit
+# from the training group, so the only deliberate difference vs mlp_raw is the encoding.
+kind: mlp
+encoding: ple

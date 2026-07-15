@@ -1,0 +1,15 @@
+{
+  "stage": "B.2", "round": 1, "is_final_round": false,
+  "rebuttals": [
+    {"finding_id": "F1", "original_severity": 8, "rebuttal_type": "DEFER", "severity_adjustment": 0, "adjusted_severity": 8, "justification": "Strawman baseline; settling arm logreg_quadratic at Step 6.", "r2_challenge_response": "MAINTAINED"},
+    {"finding_id": "F2", "original_severity": 7, "rebuttal_type": "DEFER", "severity_adjustment": 0, "adjusted_severity": 7, "justification": "PLE-on-raw vs log-space; settling arm logreg_ple_log at Step 6.", "r2_challenge_response": "MAINTAINED"},
+    {"finding_id": "F3", "original_severity": 6, "rebuttal_type": "REBUT-DESIGN", "severity_adjustment": -3, "adjusted_severity": 3, "justification": "Conservative-bias direction holds; residual top-bin resolution loss unquantified -> accept 3; Step 6 saturation diagnostic.", "r2_challenge_response": "CONCEDED"},
+    {"finding_id": "F4", "original_severity": 5, "rebuttal_type": "DEFER", "severity_adjustment": -2, "adjusted_severity": 3, "justification": "Unit conflation acknowledged; magnitude undemonstrated; settle via train-only la_std relabel + rerun at Step 6.", "r2_challenge_response": "CONCEDED"},
+    {"finding_id": "F5", "original_severity": 6, "rebuttal_type": "REBUT-SCOPE", "severity_adjustment": -4, "adjusted_severity": 2, "justification": "'proxy' label disclosed; hgb_ple required at Step 6.", "r2_challenge_response": "MAINTAINED"},
+    {"finding_id": "F6", "original_severity": 5, "rebuttal_type": "REBUT-SCOPE", "severity_adjustment": -2, "adjusted_severity": 3, "justification": "class_weight changes coefficients/ranking (not just calibration); harmonize across arms at Step 6.", "r2_challenge_response": "CONCEDED"},
+    {"finding_id": "F7", "original_severity": 3, "rebuttal_type": "REBUT-IMMATERIAL", "severity_adjustment": -2, "adjusted_severity": 1, "justification": "Secondary metric; fixed budgets at Step 6.", "r2_challenge_response": "MAINTAINED"},
+    {"finding_id": "F8", "original_severity": 2, "rebuttal_type": "REBUT-EVIDENCE", "severity_adjustment": -2, "adjusted_severity": 0, "justification": "Critic arithmetic error; printed rate ~10% matches README.", "r2_challenge_response": "MAINTAINED"}
+  ],
+  "overall_verdict": "empirical_test_agreed",
+  "verdict_rationale": "F1(8)/F2(7) DEFER above threshold; no CONCEDEs; F3/F4/F6 at boundary 3; rest <=2 -> empirical_test_agreed."
+}

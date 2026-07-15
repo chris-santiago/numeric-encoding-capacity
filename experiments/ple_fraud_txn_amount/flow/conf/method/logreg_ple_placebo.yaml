@@ -1,0 +1,5 @@
+# Falsification lever: logreg with raw amount but PLE applied to the ~monotone
+# placebo feature (C1). PLE should give NO lift here vs logreg_raw.
+kind: logreg
+amt_encoding: raw
+placebo_ple: true

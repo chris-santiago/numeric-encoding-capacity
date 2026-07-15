@@ -1,0 +1,14 @@
+{
+  "stage": "A.2",
+  "rebuttals": [
+    {"finding_id": "F1", "original_severity": 9, "rebuttal_type": "DEFER", "severity_adjustment": 0, "adjusted_severity": 9, "justification": "Synthetic saturation makes sub-claim (a) (deviation helps) unresolvable; affects all GRU arms symmetrically so CONCEDE blocked. Settle via harder variant (card level not in recent history, +0.5-1.0 sigma spike) + real data. Pipeline + seq>>baseline + PLE-adds-nothing purposes survive."},
+    {"finding_id": "F2", "original_severity": 8, "rebuttal_type": "DEFER", "severity_adjustment": 0, "adjusted_severity": 8, "justification": "tab_last_raw strawman; seq>>tab measures history access not temporal modeling. Settle via tab_aggregate baseline [last, mean(prior), std(prior)]. GRU-arm comparisons unaffected."},
+    {"finding_id": "F3", "original_severity": 7, "rebuttal_type": "DEFER", "severity_adjustment": 0, "adjusted_severity": 7, "justification": "mu/sd + PLE edges fit including fraud last step; deviation is causal. Directionally CONSERVATIVE for seq_dev (raw gets contaminated-normalization advantage). PLE comparison ambiguous. Settle via causal-only refit (prior steps)."},
+    {"finding_id": "F4", "original_severity": 6, "rebuttal_type": "DEFER", "severity_adjustment": 0, "adjusted_severity": 6, "justification": "8 epochs no convergence check; seq_ple (24-dim) may be undertrained. Ceiling partially mitigates on easy task; matters on harder/real. Settle via loss curves + train-to-plateau."},
+    {"finding_id": "F5", "original_severity": 5, "rebuttal_type": "DEFER", "severity_adjustment": 0, "adjusted_severity": 5, "justification": "Parity may be L-specific (running-mean noise scales with length). Settle via length sweep L=3/8/16 on a variant with headroom."},
+    {"finding_id": "F6", "original_severity": 3, "rebuttal_type": "REBUT-SCOPE", "severity_adjustment": -3, "adjusted_severity": 0, "justification": "iid split appropriate for stationary synthetic PoC; temporal split already mandated for Step 6 real data."},
+    {"finding_id": "F7", "original_severity": 2, "rebuttal_type": "REBUT-IMMATERIAL", "severity_adjustment": -2, "adjusted_severity": 0, "justification": "Mechanism figure on full data is cosmetic (iid -> same shape); no result depends on it."}
+  ],
+  "overall_verdict": "empirical_test_agreed",
+  "verdict_rationale": "F1-F5 DEFER to named Step-6 tests; no concessions; F6/F7 rebutted. Sub-claim (a) open pending harder control + real data."
+}

@@ -1,0 +1,12 @@
+{
+  "stage": "B.1", "round": 1,
+  "challenges": [
+    {"finding_id": "F1", "challenge_verdict": "ACCEPT", "updated_severity": 9, "reasoning": "DEFER honest, held at 9; harder-variant settling test sound. Sub-claim (a) unresolvable from PoC."},
+    {"finding_id": "F2", "challenge_verdict": "ACCEPT", "updated_severity": 8, "reasoning": "tab_aggregate settling test named; mechanism confound acknowledged; severity honest."},
+    {"finding_id": "F3", "challenge_verdict": "PARTIAL", "updated_severity": 6, "reasoning": "Conservative-for-seq_dev argument correct (contamination helps raw, not hurts dev). But PLE-edge contamination (fraud-shaped bins -> leakage-adjacent advantage to seq_ple) NOT mitigated by that argument; remains material until causal-only refit. 7->6, not lower."},
+    {"finding_id": "F4", "challenge_verdict": "ACCEPT", "updated_severity": 6, "reasoning": "Convergence risk for seq_ple acknowledged; ceiling partial mitigation; loss-curve/plateau test named."},
+    {"finding_id": "F5", "challenge_verdict": "ACCEPT", "updated_severity": 5, "reasoning": "Length sweep test sound; parity conditional on headroom."},
+    {"finding_id": "F6", "challenge_verdict": "ACCEPT", "updated_severity": 0, "reasoning": "REBUT-SCOPE valid; no distribution shift in stationary synthetic PoC; temporal split mandated for Step 6."},
+    {"finding_id": "F7", "challenge_verdict": "ACCEPT", "updated_severity": 0, "reasoning": "REBUT-IMMATERIAL valid; iid -> figure identical on train/test; cosmetic."}
+  ]
+}

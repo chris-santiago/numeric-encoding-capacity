@@ -1,0 +1,3 @@
+# GRU on per-step [PLE(amount), PLE(Δt)] (quantile bins on RAW), fed affinely. Fixed basis.
+kind: gru
+enc: ple

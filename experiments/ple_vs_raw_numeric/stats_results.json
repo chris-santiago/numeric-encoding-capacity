@@ -1,0 +1,338 @@
+{
+  "aggregate_results": [
+    {
+      "auc_roc_hi": 0.6499468129655894,
+      "auc_roc_lo": 0.6074369280562306,
+      "auc_roc_mean": 0.6286196362980834,
+      "cell": {
+        "target": "nonmono"
+      },
+      "method": "logreg_raw"
+    },
+    {
+      "auc_roc_hi": 0.869730635328162,
+      "auc_roc_lo": 0.8559151202465615,
+      "auc_roc_mean": 0.8636611208770398,
+      "cell": {
+        "target": "nonmono"
+      },
+      "method": "logreg_ple"
+    },
+    {
+      "auc_roc_hi": 0.8320187299802626,
+      "auc_roc_lo": 0.8009434073637105,
+      "auc_roc_mean": 0.8177611100001144,
+      "cell": {
+        "target": "nonmono"
+      },
+      "method": "mlp_raw"
+    },
+    {
+      "auc_roc_hi": 0.8603767778407527,
+      "auc_roc_lo": 0.8432330574987508,
+      "auc_roc_mean": 0.8524332446756817,
+      "cell": {
+        "target": "nonmono"
+      },
+      "method": "mlp_ple"
+    },
+    {
+      "auc_roc_hi": 0.8332678172556205,
+      "auc_roc_lo": 0.8110407581189792,
+      "auc_roc_mean": 0.8224865793255894,
+      "cell": {
+        "target": "nonmono"
+      },
+      "method": "mlp_raw_wide"
+    },
+    {
+      "auc_roc_hi": 0.6874590772174661,
+      "auc_roc_lo": 0.6624405349531676,
+      "auc_roc_mean": 0.6759099149666807,
+      "cell": {
+        "target": "nonmono"
+      },
+      "method": "mlp_rff"
+    },
+    {
+      "auc_roc_hi": 0.8738702459118702,
+      "auc_roc_lo": 0.8585826369063769,
+      "auc_roc_mean": 0.8665766589099186,
+      "cell": {
+        "target": "linear"
+      },
+      "method": "logreg_raw"
+    },
+    {
+      "auc_roc_hi": 0.8662752963910335,
+      "auc_roc_lo": 0.8497234674294102,
+      "auc_roc_mean": 0.8582486694056929,
+      "cell": {
+        "target": "linear"
+      },
+      "method": "logreg_ple"
+    },
+    {
+      "auc_roc_hi": 0.8708534958081058,
+      "auc_roc_lo": 0.8557221733427821,
+      "auc_roc_mean": 0.8636141958881236,
+      "cell": {
+        "target": "linear"
+      },
+      "method": "mlp_raw"
+    },
+    {
+      "auc_roc_hi": 0.8604651406572923,
+      "auc_roc_lo": 0.8471849018693185,
+      "auc_roc_mean": 0.8538701487354607,
+      "cell": {
+        "target": "linear"
+      },
+      "method": "mlp_ple"
+    },
+    {
+      "auc_roc_hi": 0.8718608896241835,
+      "auc_roc_lo": 0.8569664217957963,
+      "auc_roc_mean": 0.8647979653245524,
+      "cell": {
+        "target": "linear"
+      },
+      "method": "mlp_raw_wide"
+    },
+    {
+      "auc_roc_hi": 0.7670363341744435,
+      "auc_roc_lo": 0.7242203496410629,
+      "auc_roc_mean": 0.7453760500439466,
+      "cell": {
+        "target": "linear"
+      },
+      "method": "mlp_rff"
+    }
+  ],
+  "analyses": {
+    "ple_vs_raw::auc_by_arm": {
+      "branch": "auc_by_arm",
+      "experiment": "ple_vs_raw",
+      "rows": [
+        {
+          "auc_mean": 0.8582486694056929,
+          "method": "logreg_ple",
+          "n_seeds": 10,
+          "target": "linear"
+        },
+        {
+          "auc_mean": 0.8665766589099186,
+          "method": "logreg_raw",
+          "n_seeds": 10,
+          "target": "linear"
+        },
+        {
+          "auc_mean": 0.8538701487354607,
+          "method": "mlp_ple",
+          "n_seeds": 10,
+          "target": "linear"
+        },
+        {
+          "auc_mean": 0.8636141958881236,
+          "method": "mlp_raw",
+          "n_seeds": 10,
+          "target": "linear"
+        },
+        {
+          "auc_mean": 0.8647979653245524,
+          "method": "mlp_raw_wide",
+          "n_seeds": 10,
+          "target": "linear"
+        },
+        {
+          "auc_mean": 0.7453760500439466,
+          "method": "mlp_rff",
+          "n_seeds": 10,
+          "target": "linear"
+        },
+        {
+          "auc_mean": 0.8636611208770398,
+          "method": "logreg_ple",
+          "n_seeds": 10,
+          "target": "nonmono"
+        },
+        {
+          "auc_mean": 0.6286196362980834,
+          "method": "logreg_raw",
+          "n_seeds": 10,
+          "target": "nonmono"
+        },
+        {
+          "auc_mean": 0.8524332446756817,
+          "method": "mlp_ple",
+          "n_seeds": 10,
+          "target": "nonmono"
+        },
+        {
+          "auc_mean": 0.8177611100001144,
+          "method": "mlp_raw",
+          "n_seeds": 10,
+          "target": "nonmono"
+        },
+        {
+          "auc_mean": 0.8224865793255894,
+          "method": "mlp_raw_wide",
+          "n_seeds": 10,
+          "target": "nonmono"
+        },
+        {
+          "auc_mean": 0.6759099149666807,
+          "method": "mlp_rff",
+          "n_seeds": 10,
+          "target": "nonmono"
+        }
+      ]
+    },
+    "ple_vs_raw::convergence": {
+      "branch": "convergence",
+      "experiment": "ple_vs_raw",
+      "rows": [
+        {
+          "frac_converged": 1.0,
+          "max_iter": 1000,
+          "method": "mlp_ple",
+          "n_iter_max": 48,
+          "n_iter_mean": 35.7,
+          "n_params": 16577
+        },
+        {
+          "frac_converged": 1.0,
+          "max_iter": 1000,
+          "method": "mlp_raw",
+          "n_iter_max": 134,
+          "n_iter_mean": 54.65,
+          "n_params": 4801
+        },
+        {
+          "frac_converged": 1.0,
+          "max_iter": 1000,
+          "method": "mlp_raw_wide",
+          "n_iter_max": 70,
+          "n_iter_mean": 40.2,
+          "n_params": 18817
+        },
+        {
+          "frac_converged": 1.0,
+          "max_iter": 1000,
+          "method": "mlp_rff",
+          "n_iter_max": 71,
+          "n_iter_mean": 42.9,
+          "n_params": 16577
+        }
+      ]
+    },
+    "ple_vs_raw::linearization": {
+      "branch": "linearization",
+      "experiment": "ple_vs_raw",
+      "rows": [
+        {
+          "ridge_r2_ple": 0.9998217829403913,
+          "ridge_r2_raw": 0.9999999680100353,
+          "target": "linear"
+        },
+        {
+          "ridge_r2_ple": 0.9849372019033623,
+          "ridge_r2_raw": 0.10037249331314993,
+          "target": "nonmono"
+        }
+      ]
+    }
+  },
+  "determinism": "order_independent",
+  "experiment": "ple_vs_raw",
+  "lift_results": [
+    {
+      "cell": {
+        "target": "nonmono"
+      },
+      "ci_excludes_zero": true,
+      "lift_hi": 0.04457556327517685,
+      "lift_lo": 0.024718405518491134,
+      "lift_mean": 0.034672134675567345,
+      "n_seeds": 10,
+      "pair": "mlp_ple_minus_mlp_raw"
+    },
+    {
+      "cell": {
+        "target": "linear"
+      },
+      "ci_excludes_zero": true,
+      "lift_hi": -0.006588777371472859,
+      "lift_lo": -0.013167040277393993,
+      "lift_mean": -0.009744047152662739,
+      "n_seeds": 10,
+      "pair": "mlp_ple_minus_mlp_raw"
+    },
+    {
+      "cell": {
+        "target": "nonmono"
+      },
+      "ci_excludes_zero": true,
+      "lift_hi": 0.2581568263760115,
+      "lift_lo": 0.21295121287633662,
+      "lift_mean": 0.23504148457895657,
+      "n_seeds": 10,
+      "pair": "logreg_ple_minus_logreg_raw"
+    },
+    {
+      "cell": {
+        "target": "linear"
+      },
+      "ci_excludes_zero": true,
+      "lift_hi": -0.006554858471658012,
+      "lift_lo": -0.010157159909280192,
+      "lift_mean": -0.008327989504225763,
+      "n_seeds": 10,
+      "pair": "logreg_ple_minus_logreg_raw"
+    },
+    {
+      "cell": {
+        "target": "nonmono"
+      },
+      "ci_excludes_zero": true,
+      "lift_hi": 0.03587387250778536,
+      "lift_lo": 0.02334027394245017,
+      "lift_mean": 0.029946665350092105,
+      "n_seeds": 10,
+      "pair": "mlp_ple_minus_mlp_raw_wide"
+    },
+    {
+      "cell": {
+        "target": "linear"
+      },
+      "ci_excludes_zero": true,
+      "lift_hi": -0.0074687874076094,
+      "lift_lo": -0.014854547173692438,
+      "lift_mean": -0.010927816589091578,
+      "n_seeds": 10,
+      "pair": "mlp_ple_minus_mlp_raw_wide"
+    },
+    {
+      "cell": {
+        "target": "nonmono"
+      },
+      "ci_excludes_zero": true,
+      "lift_hi": 0.18781070354132123,
+      "lift_lo": 0.16416991773159278,
+      "lift_mean": 0.1765233297090008,
+      "n_seeds": 10,
+      "pair": "mlp_ple_minus_mlp_rff"
+    },
+    {
+      "cell": {
+        "target": "linear"
+      },
+      "ci_excludes_zero": true,
+      "lift_hi": 0.1271683844486203,
+      "lift_lo": 0.08945868054785196,
+      "lift_mean": 0.10849409869151427,
+      "n_seeds": 10,
+      "pair": "mlp_ple_minus_mlp_rff"
+    }
+  ]
+}

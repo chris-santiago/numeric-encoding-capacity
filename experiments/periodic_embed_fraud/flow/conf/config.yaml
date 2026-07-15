@@ -1,0 +1,14 @@
+# Master config — periodic embeddings on the fraud GRU time features (cycle 4).
+# Run:   uv run periodic_flow.py --config-value cfg "hydra_overrides: [experiment=periodic]" run --max-workers 1
+# Smoke: uv run periodic_flow.py --config-value cfg "hydra_overrides: [seeds=1,data.n_targets_train=3000,data.n_targets_valid=1500,data.n_targets_test=1500]" run --max-workers 1
+defaults:
+  - data: accounts
+  - experiment: periodic
+  - training: default
+  - _self_
+
+seeds: 3
+bootstrap:
+  n_resamples: 1000
+  seed: 0
+max_workers: 1

@@ -1,0 +1,3 @@
+# GRU on per-step [std log amount, std log Δt] fed affinely. Reference baseline.
+kind: gru
+enc: scalar

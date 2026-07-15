@@ -1,0 +1,19 @@
+# PLE-vs-raw experiment (the locked Gate-1 design; see EXPERIMENT_PLAN.md).
+#
+# One data axis (`target`) toggles the non-monotonic signal vs the linear control.
+# Six methods compare encodings x models. No training axis (AUC-ROC has no
+# parameterization), so every method is axis-agnostic.
+name: ple_vs_raw
+axes:
+  target: [nonmono, linear]   # DATA axis: nonmono = hypothesis, linear = falsification control
+data_axes: [target]
+methods: [logreg_raw, logreg_ple, mlp_raw, mlp_ple, mlp_raw_wide, mlp_rff]
+method_overrides: {}
+split_convention: sequential  # authoritative copy lives in the data group; echoed for visibility
+diagnostics: [auc_by_arm, convergence, linearization]
+requests_model: false
+requests_scores: false
+# Reproducibility contract verified by the determinism gate (see conf/SCHEMA.md):
+# sklearn estimators are deterministic given fixed random_state, and each dataset
+# branch trains independently -> aggregates are identical across worker counts.
+determinism: order_independent

@@ -1,0 +1,13 @@
+# Real IEEE-CIS data group. make_data loads train_transaction.csv (subset cols),
+# temporal-sorts by TransactionDT, splits past->future. Data is seed-independent
+# (the foreach grain is the model-init seed; the split is fixed).
+kind: ieee_cis
+path: /Users/chrissantiago/Dropbox/GitHub/numeric-encoding-capacity/data/ieee-fraud-detection/train_transaction.csv
+label_col: isFraud
+time_col: TransactionDT
+amount_col: TransactionAmt
+placebo_col: C1            # ~monotone fraud-vs-feature curve (EDA |rho|=0.82) -> falsification lever
+n_rows: 150000            # uniform-stride subsample over the full time range (runtime control)
+train_frac: 0.70          # temporal: earliest 70% train, latest 30% test
+num_features: [TransactionAmt, card1, card2, card3, card5, addr1, dist1, C1, C13, D1, D15]
+cat_features: [ProductCD, card4, card6]

@@ -1,0 +1,62 @@
+{
+  "point_verdicts": [
+    {
+      "finding_id": "F1",
+      "adjusted_severity": 8,
+      "rebuttal_type": "DEFER",
+      "point_verdict": "empirical_test_agreed",
+      "rule_applied": "adj_sev=8, DEFER \u2192 empirical_test_agreed"
+    },
+    {
+      "finding_id": "F2",
+      "adjusted_severity": 7,
+      "rebuttal_type": "DEFER",
+      "point_verdict": "empirical_test_agreed",
+      "rule_applied": "adj_sev=7, DEFER \u2192 empirical_test_agreed"
+    },
+    {
+      "finding_id": "F3",
+      "adjusted_severity": 3,
+      "rebuttal_type": "REBUT-DESIGN",
+      "point_verdict": "defense_wins",
+      "rule_applied": "adj_sev=3 \u2264 3 \u2192 defense_wins"
+    },
+    {
+      "finding_id": "F4",
+      "adjusted_severity": 3,
+      "rebuttal_type": "DEFER",
+      "point_verdict": "defense_wins",
+      "rule_applied": "constitutional: DEFER + adj_sev=3 \u2264 3 \u2192 defense_wins"
+    },
+    {
+      "finding_id": "F5",
+      "adjusted_severity": 2,
+      "rebuttal_type": "REBUT-SCOPE",
+      "point_verdict": "defense_wins",
+      "rule_applied": "adj_sev=2 \u2264 3 \u2192 defense_wins"
+    },
+    {
+      "finding_id": "F6",
+      "adjusted_severity": 3,
+      "rebuttal_type": "REBUT-SCOPE",
+      "point_verdict": "defense_wins",
+      "rule_applied": "adj_sev=3 \u2264 3 \u2192 defense_wins"
+    },
+    {
+      "finding_id": "F7",
+      "adjusted_severity": 1,
+      "rebuttal_type": "REBUT-IMMATERIAL",
+      "point_verdict": "defense_wins",
+      "rule_applied": "adj_sev=1 \u2264 3 \u2192 defense_wins"
+    },
+    {
+      "finding_id": "F8",
+      "adjusted_severity": 0,
+      "rebuttal_type": "REBUT-EVIDENCE",
+      "point_verdict": "defense_wins",
+      "rule_applied": "adj_sev=0 \u2264 3 \u2192 defense_wins"
+    }
+  ],
+  "case_verdict": "empirical_test_agreed",
+  "case_rationale": "2 point(s) deferred; no critique_wins"
+}

@@ -1,0 +1,9 @@
+{"stage":"B.1","round":2,"all_accept":true,"challenges":[
+  {"finding_id":"F1","challenge_verdict":"ACCEPT","updated_severity":9,"reasoning":"DEFER(9) honest; harder-variant+real-data test."},
+  {"finding_id":"F2","challenge_verdict":"ACCEPT","updated_severity":8,"reasoning":"DEFER(8); tab_aggregate test."},
+  {"finding_id":"F3","challenge_verdict":"ACCEPT","updated_severity":6,"reasoning":"DEFER(6); causal-only refit covers PLE-edge."},
+  {"finding_id":"F4","challenge_verdict":"ACCEPT","updated_severity":6,"reasoning":"DEFER(6); convergence test."},
+  {"finding_id":"F5","challenge_verdict":"ACCEPT","updated_severity":5,"reasoning":"DEFER(5); length sweep."},
+  {"finding_id":"F6","challenge_verdict":"ACCEPT","updated_severity":0,"reasoning":"REBUT-SCOPE valid."},
+  {"finding_id":"F7","challenge_verdict":"ACCEPT","updated_severity":0,"reasoning":"REBUT-IMMATERIAL valid."}
+]}

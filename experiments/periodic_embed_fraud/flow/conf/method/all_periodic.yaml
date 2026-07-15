@@ -1,0 +1,4 @@
+# GRU; both cyclic AND inter-txn time as LEARNED periodic (PLR). Combined periodic arm.
+kind: gru
+cyc_enc: periodic
+dt_enc: periodic

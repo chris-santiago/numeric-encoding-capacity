@@ -1,0 +1,3 @@
+# Neural hypothesis arm (required): MLP, PLE on raw amount.
+kind: mlp
+amt_encoding: ple_raw

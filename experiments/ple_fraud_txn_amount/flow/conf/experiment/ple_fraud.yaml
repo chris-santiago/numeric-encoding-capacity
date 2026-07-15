@@ -1,0 +1,15 @@
+# PLE-on-amount fraud experiment (locked Gate-1 design; see EXPERIMENT_PLAN.md).
+# No data axis (single real dataset, fixed temporal split); foreach grain = init seed.
+name: ple_fraud
+axes: {}
+data_axes: []
+methods: [logreg_raw, logreg_quadratic, logreg_ple_raw, logreg_ple_log, logreg_ple_placebo,
+          mlp_raw, mlp_ple_raw, mlp_ple_log, hgb_raw, hgb_ple]
+method_overrides: {}
+split_convention: temporal
+diagnostics: [auc_by_arm, fraud_curve, saturation]
+requests_model: false
+requests_scores: true        # store seed-0 test scores for test-set bootstrap CIs
+# sklearn estimators with fixed random_state are deterministic; each branch trains
+# independently -> aggregates identical across worker counts.
+determinism: order_independent

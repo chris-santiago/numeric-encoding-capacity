@@ -1,0 +1,3 @@
+# GRU on ReLU(Dense([std log amount, std log Δt])) — per-step free nonlinearity = mechanism/positive control.
+kind: gru
+enc: dense

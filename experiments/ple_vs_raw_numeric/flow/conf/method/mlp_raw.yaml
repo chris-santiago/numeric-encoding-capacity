@@ -1,0 +1,4 @@
+# Reference arm: MLP on raw standardized features. Architecture inherits the
+# training-group default (64, 64).
+kind: mlp
+encoding: raw

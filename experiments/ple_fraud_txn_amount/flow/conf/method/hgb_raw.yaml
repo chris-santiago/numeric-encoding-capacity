@@ -1,0 +1,3 @@
+# GBDT reference: HistGradientBoosting, raw amount (bins + interactions natively).
+kind: hgb
+amt_encoding: raw

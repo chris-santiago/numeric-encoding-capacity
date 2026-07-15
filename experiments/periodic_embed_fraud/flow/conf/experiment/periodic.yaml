@@ -1,0 +1,16 @@
+# Periodic-embedding experiment (locked Gate-1 design, cycle 4).
+# length is a DATA axis; foreach grain = (length, seed). Length axis dropped to single L=32 at Gate 1.
+name: periodic
+axes:
+  length: [32]
+data_axes: [length]
+# arms differ ONLY in the per-step time-encoding block (amount raw-log + context held fixed):
+methods: [base_raw, cyc_sincos, cyc_periodic, dt_periodic, all_periodic, tab_logreg]
+method_overrides: {}
+split_convention: temporal
+diagnostics: [pr_auc_by_arm, encoding_check]
+requests_model: false
+requests_scores: true     # seed-0 test scores for test-set bootstrap CIs
+# torch GRU + learnable periodic frequencies on CPU: determinism claimed at a single worker
+# (run-twice-identical with pinned threads + fixed seeds). Cross-worker parallelism not asserted.
+determinism: single_worker

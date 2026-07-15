@@ -1,0 +1,5 @@
+# Trivial baseline: logistic regression on last-step raw features (hour/24, dow/7, std log-dt,
+# std log-amount, context). No sequence, no embedding. Non-negotiable baseline.
+kind: tab
+cyc_enc: raw
+dt_enc: raw

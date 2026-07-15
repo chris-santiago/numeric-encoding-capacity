@@ -1,0 +1,6 @@
+# Falsification lever: GRU over per-step raw amount + context, but with the within-account
+# prior-step ORDER SHUFFLED (the target last step kept in place). Destroys cross-time context;
+# the seq_raw advantage over tab_aggregate should collapse if the signal is genuinely temporal.
+kind: gru
+enc: raw
+shuffle: true
