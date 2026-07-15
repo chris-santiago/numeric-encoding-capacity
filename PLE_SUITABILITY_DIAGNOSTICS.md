@@ -51,27 +51,46 @@ mean/std/last. A recency-agnostic baseline passes the gate too cheaply.
 ## Gate C — The core discriminator: non-monotone risk-in-context (Cycle 8)
 
 **This is the gate that decides most cases.** In a GRU, monotone shapes — linear *or* curved — are absorbed
-by the gate nonlinearities, so PLE only pays its deficit. PLE is a lever **only for non-monotone /
-band-selective** per-step risk.
+by the gate nonlinearities, so PLE only pays its deficit. PLE is a lever **only for SHARP, localized
+non-monotone / band-selective** per-step risk. Non-monotonicity is *necessary but not sufficient*: a broad,
+smooth inverted-U the gates can already approximate is **not** a lever (probe: a std-normalized band gave
+`ple−log` = +0.275 when sharp (σ=0.10) but +0.005 ns when broad (σ=1.00), despite both being strongly
+non-monotone at bin resolution). What the affine read cannot form is a *crisp* per-step detector; a gentle
+hump it approximates.
 
-**C1. Screen: empirical risk-vs-value shape.** Bin the feature by value percentile and plot empirical fraud
-rate per bin. Quantify departure-from-monotone: fit an **isotonic (monotone) regression** of fraud-rate on
-value and compare its loss to an unconstrained fit.
-- *Non-monotone (PLE candidate):* interior extremum (U / inverted-U / band); isotonic fit materially worse
-  than unconstrained; |Spearman ρ| near 0 despite clear mutual information.
-- *Monotone (linear OR curved) → keep `log`:* isotonic fit ≈ unconstrained; |Spearman ρ| near 1. **A
-  curved-but-monotone feature fails this gate** — that is the entire Cycle 8 finding.
-- *Caveat:* marginal risk-vs-value is a screen. The definitive, in-context check is C2.
+**C1. Screen: empirical risk-vs-value shape (at quantile-bin resolution).** Bin the feature **by
+percentile** (quantile bins — resolution follows data density, finest where the mass is) and plot empirical
+fraud rate per bin. Fit an **isotonic (monotone) regression** of binned fraud-rate on value; the
+non-monotone fraction is `1 − R²_isotonic`.
+- *Sharp non-monotone (PLE candidate):* an interior extremum concentrated over a *few adjacent bins*
+  (band/spike); large non-monotone fraction. This is where the affine bottleneck bites hardest.
+- *Broad/smooth non-monotone → likely keep `log`:* high non-monotone fraction but spread across the whole
+  range — the gates approximate it; confirm with C2 before spending on PLE.
+- *Monotone (linear OR curved) → keep `log`:* non-monotone fraction ≈ 0. **A curved-but-monotone feature
+  fails this gate** — the Cycle 8 finding. (When bins look monotone, PLE gave no benefit: `ple−log` = −0.017.)
+- *Caveat:* C1 is a screen and can **false-positive on broad non-monotonicity**. The definitive check is C2.
 
-**C2. Free-nonlinearity probe — the `dense` arm (decisive).** Add a per-step `Linear→ReLU` (`dense`) arm and
-compare `dense − log`. `dense` is a **superset** of PLE's per-step expressivity, learned and adaptive.
-- *`dense − log` ≈ 0 (CI includes 0):* no per-step transform helps → the GRU already handles this feature's
-  shape → **PLE won't help either. Keep `log`.** (Cycle 8: `dense−log` = +0.004 on a monotone-curved feature.)
-- *`dense − log` CI-clear > 0:* a genuine per-step lever exists the GRU can't reach on its own → **PLE is a
-  candidate** (and a cheap fixed basis may beat `dense`; Cycle 6). Proceed to Gate D.
+**C2. Free-nonlinearity probe — `dense`/per-feature `mlp` arm (decisive, the reliable gate).** Add a per-step
+learned embedding (`Linear→ReLU`) of the feature and compare its `− log`. It is a **superset** of PLE's
+per-step expressivity, learned and adaptive, so it detects whether *any* per-step transform helps.
+- *`mlp − log` ≈ 0 (CI includes 0):* no per-step transform helps → the GRU already handles this shape →
+  **PLE won't help either. Keep `log`.** (Cycle 8 monotone-curved: +0.004; broad band σ=1.00: +0.010 ns.)
+- *`mlp − log` CI-clear > 0:* a genuine per-step lever exists → **PLE is a candidate.** Proceed to Gate D.
 
-> C2 is the single most architecture-honest test: it asks directly "is there a per-step lever this GRU
-> cannot already reach?" It cannot be faked by a rank metric or a contaminated reference.
+> C2 is the single most architecture-honest test and, empirically, the **reliable** one: across a full
+> non-monotonicity-sharpness sweep, `mlp−log` tracked `ple−log` at every point (both large when sharp, both
+> null when broad), whereas the C1 shape screen false-positived on the broad band. When C1 and C2 disagree,
+> trust C2. It cannot be faked by a rank metric or a contaminated reference.
+
+**C3. Which encoder, once C2 fires — fixed PLE or a learned per-feature embed (same dim)?** Both are
+piecewise-linear embeddings of the scalar; PLE fixes knots at quantiles, the `mlp` learns them. Probe
+result (same `d`, concatenated with the untouched other features, affine GRU):
+- *Sharp/localized non-monotonicity:* **fixed PLE wins** (`ple−mlp` = +0.028, CI-clear) — quantile knots
+  land dense resolution exactly where the band sits; the learned embed must discover it via SGD.
+- *Broad non-monotonicity:* **tie** (`ple−mlp` ≈ 0).
+- *Monotone / unsure:* **learned embed wins/safer** (`ple−mlp` = −0.038 on monotone-curved; the `mlp`
+  degrades gracefully to a ~0 floor while PLE pays its deficit). Because it is per-single-feature, it does
+  **not** flip the rest of the numeric path out of the affine-read regime.
 
 ---
 
