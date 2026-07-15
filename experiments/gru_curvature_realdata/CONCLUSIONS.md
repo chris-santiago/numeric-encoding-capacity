@@ -120,8 +120,10 @@ lower effective width.
 
 ## Deployment recommendation (updated, final)
 
-For an affine GRU: **prefer a learned per-feature embed over fixed PLE** (same lever, lower deficit),
-**target few features** with **sharp or sharply-curved** per-step risk, at **low width**. Sharp
-non-monotone structure is the highest-value target; monotone curvature is a moderate lever; smooth
-non-monotone and log-linear features need no encoding. Standing external item: the real-data A/B (Cycle 6),
-now with the validated precondition gate and this targeting rule.
+For an affine GRU: **target few features** with **sharp or sharply-curved** per-step risk, at **low
+width**, and **choose the encoder by target sharpness** — a **learned per-feature embed for smooth/curved**
+targets (lower deficit; wins +0.094), **fixed PLE for sharp/localized** targets (SGD can't place sharp
+knots; PLE wins +0.11–0.18, robust to band location). Sharp non-monotone structure is the highest-value
+target (~+0.45) and PLE is its right encoder; monotone curvature is a moderate lever best served by the
+learned embed; smooth non-monotone and log-linear features need no encoding. Standing external item: the
+real-data A/B (Cycle 6), now with the validated precondition gate and this targeting rule.

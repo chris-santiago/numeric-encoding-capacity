@@ -73,8 +73,9 @@ gates already handle it.
 
 **The deficit is usually the binding constraint, and it confines the raw net-win to a narrow ridge.** For
 fixed PLE, raw `ple−log > 0` held at only one config in a K×bins sweep (K≈4, bins≈8, +0.047); more bins or
-features push it negative. A **learned per-feature embed** pays a smaller deficit and so wins raw where PLE
-does not (C3) — prefer it.
+features push it negative. **Encoder choice depends on the target's sharpness (C3):** a learned per-feature
+embed pays less deficit and wins on *smooth/curved* targets, while *fixed PLE* wins decisively on
+*sharp/localized* targets (SGD can't place sharp knots; PLE's quantile knots resolve them for free).
 
 **C1. Screen: empirical risk-vs-value shape (necessary, not sufficient).** Bin the feature by percentile,
 plot empirical fraud rate per bin, fit an isotonic regression; the non-monotone fraction is `1 − R²_iso`.
@@ -96,20 +97,25 @@ not be skipped after Cycle 8:
 - A free-nonlinearity `mlp`/`dense` arm remains a useful corroborator ("does *any* per-step transform help"),
   but it too must be run multivariate — single-feature `dense`/`mlp` numbers are in the invisible regime.
 
-**C3. Fixed PLE vs a learned per-feature embed — RESOLVED: prefer the learned embed.** A multivariate
-(K=6), shared-coordinate, 8-seed, Holm-corrected rerun (`fixed_vs_learned.py`) settles it: on monotone
-curvature the **learned `Linear(1→d)→ReLU` embed beats fixed PLE by +0.094 raw (Holm-sig)**. Both unlock
-nearly identical *lever* (deficit-corrected +0.137 vs +0.148); the gap is PLE paying a **larger
-dimensionality deficit** at equal width — its `d` fixed ramps all fire and load the recurrence, while the
-learned embed shapes its `d` outputs to carry the same signal at lower effective cost. Since the deficit is
-the binding deployment constraint (Gate D), the encoder that pays less deficit wins. **Default to the
-learned per-feature embed** (same lever, lower deficit, graceful ~0 floor on shapes with no lever). Scope:
-established for monotone curvature; for *sharp non-monotone* structure PLE's dense-quantile-knots-at-the-band
-could still compete — untested, so verify per feature-type before assuming the learned embed dominates there.
+**C3. Fixed PLE vs a learned per-feature embed — RESOLVED: the choice flips on TARGET SHARPNESS.** Two
+multivariate, shared-coordinate, 8-seed, Holm-corrected reruns settle it:
+- **Smooth target (monotone curvature) → learned embed wins** (`fixed_vs_learned.py`): the
+  `Linear(1→d)→ReLU` embed beats PLE by +0.094 (Holm-sig). Both unlock the same lever (deficit-corrected
+  +0.137 vs +0.148); PLE loses because it pays a **larger dimensionality deficit** (its `d` ramps all fire
+  and load the recurrence) while the learned embed shapes its outputs at lower effective cost, and a smooth
+  monotone transform is easy for SGD to learn.
+- **Sharp target (localized non-monotone) → fixed PLE wins, decisively** (`nonmono_encoders.py`): PLE beats
+  the learned embed by **+0.11 to +0.18 (Holm-sig)**, and at *both* band-at-mode and band-off-mode, so it is
+  robust to band location. The learned embed loses because SGD **cannot reliably place sharp ReLU knots** on
+  a narrow band (dead-ReLU / slow-migration), whereas PLE's fixed quantile knots blanket the range and
+  resolve the band for free. Since sharp non-monotone is the *strongest* lever (~+0.45), PLE is the right
+  tool exactly where encoding matters most.
 
-> This reverses an earlier single-feature claim that "PLE wins on sharp." That comparison was confounded
-> (different coordinates: PLE on raw, embed on log; band pinned at the density mode; n=5, no multiplicity).
-> Fixed once → the ordering flips.
+**Rule:** smooth/curved → learned per-feature embed; sharp/localized/non-monotone → fixed PLE.
+
+> This reconciles the retracted single-feature "PLE wins on sharp" claim: the retraction was methodologically
+> right (that evidence was confounded — coordinates, mode-pinning, n=5), but the *direction* is confirmed
+> once tested properly. Kill bad evidence even when the conclusion later survives on good evidence.
 
 ---
 
