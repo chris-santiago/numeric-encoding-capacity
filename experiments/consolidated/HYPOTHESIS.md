@@ -43,10 +43,15 @@ log-odds). **Precondition comparator:** GBM + EWMA tabular baseline.
 
 ## Controls (hard, wired into the verdict — never print-only)
 
-- **Positive control (halts the run if it fails):** `static_linear` curvature & non-monotone deficit-
-  corrected lifts must exclude zero (positive). Else the instrument is blind and no GRU reading is trusted.
+- **Positive control (halts the run if it fails):** the estimand must detect the *robust* lever —
+  `static_linear` PLE on the **sharp non-monotone** condition (deficit-corrected, K=6, CI excludes zero).
+  If it cannot see the strongest known lever, it is blind and no GRU reading is trusted. Curvature is a
+  *weak* lever (barely CI-clear even in Cycle 7), so it is a **reported finding**, not a halt condition —
+  gating a hard halt on a noise-dominated lever would be fragile.
+- **Curvature detection (reported):** `static_linear` curvature deficit-corrected lift — does the estimand
+  also see the weaker monotone-curvature lever?
 - **Negative control:** `log_linear` condition — no arm beats `log`.
-- **Multivariate control:** K=1 vs K=6 — curvature appears only multivariate.
+- **Multivariate control (reported):** K=1 vs K=6 — curvature appears only multivariate.
 - **Oracle ceiling:** reported per cell (context only; does not license attribution by itself).
 
 ## Fairness invariants (every arm calibrated + trained identically)

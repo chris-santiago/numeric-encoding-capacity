@@ -450,22 +450,25 @@ def deficit_corrected_lifts(records, seeds, bseed):
 
 
 def control_gate(dc_lifts):
-    """POSITIVE control (halts): in static, curvature (monotone_curved) AND non-monotone (sharp_mode)
-    deficit-corrected PLE lifts at K=6 must exclude zero positive. Else the instrument is blind."""
+    """POSITIVE control (halts if it fails): the estimand must detect the ROBUST lever — PLE on the sharp
+    non-monotone condition in the static affine-read model (deficit-corrected, K=6, CI excludes zero). If
+    the estimand cannot see the strongest known lever, it is blind and no GRU reading is interpretable.
+    Curvature (a weak lever) and the multivariate control are REPORTED findings, not halt conditions."""
     def _find(arch, cond, arm, K=6):
         for r in dc_lifts:
             if r["arch"] == arch and r["condition"] == cond and r["arm"] == arm and r["K"] == K:
                 return r
         return None
-    curv = _find("static", "monotone_curved", "static_ple")
     sharp = _find("static", "sharp_mode", "static_ple")
-    pos_ok = bool(curv and curv["ci_lo"] > 0 and sharp and sharp["ci_lo"] > 0)
-    # multivariate control: curvature lift should be ~0 at K=1, positive at K=6
+    pos_ok = bool(sharp and sharp["ci_lo"] > 0)             # robust instrument-validity lever
+    curv = _find("static", "monotone_curved", "static_ple")
     curv1 = _find("static", "monotone_curved", "static_ple", K=1)
-    multivar_ok = bool(curv1 and not curv1["ci_excludes_zero"] and curv and curv["ci_lo"] > 0)
-    return {"positive_control_fires": pos_ok, "multivariate_control_ok": multivar_ok,
+    return {"positive_control_fires": pos_ok,
             "verdict": "TRUSTWORTHY" if pos_ok else "BLIND-INSTRUMENT — halt; GRU readings not interpretable",
-            "static_curvature": curv, "static_sharp": sharp, "static_curvature_K1": curv1}
+            # reported findings (not gated):
+            "curvature_lever_detected": bool(curv and curv["ci_lo"] > 0),
+            "multivariate_control_ok": bool(curv1 and not curv1["ci_excludes_zero"] and curv and curv["ci_lo"] > 0),
+            "static_sharp": sharp, "static_curvature": curv, "static_curvature_K1": curv1}
 
 
 # ============================================================ Hydra parser + FlowSpec
@@ -574,7 +577,8 @@ try:
             gate = self.analyses["an_controls"]["result"]
             lines = [f"# Consolidated encoding-capacity report — {self.experiment_name}",
                      f"\n**Instrument verdict:** {gate['verdict']}",
-                     f"- positive control (static curvature & sharp fire): {gate['positive_control_fires']}",
+                     f"- positive control (static PLE fires on sharp non-monotone): {gate['positive_control_fires']}",
+                     f"- curvature lever detected (static, reported): {gate['curvature_lever_detected']}",
                      f"- multivariate control (curvature K=1~0, K=6>0): {gate['multivariate_control_ok']}",
                      "\n## Deficit-corrected lifts (CI-excludes-zero marked)"]
             for r in sorted(self.lift_results, key=lambda x: (x["arch"], x["condition"], x["arm"], x["K"])):
@@ -590,8 +594,7 @@ try:
             gate = self.analyses["an_controls"]["result"]
             print(f"[end] determinism={self.determinism} | instrument={gate['verdict']}", flush=True)
             if not gate["positive_control_fires"]:
-                from metaflow import MetaflowException
-                raise MetaflowException(
+                raise RuntimeError(
                     f"POSITIVE CONTROL FAILED — {gate['verdict']}. Report + lift artifacts persisted "
                     "for post-mortem, but GRU readings are NOT interpretable; run marked FAILED.")
 
