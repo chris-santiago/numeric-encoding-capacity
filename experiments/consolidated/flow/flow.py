@@ -144,11 +144,18 @@ def encode(enc, data_split, meta, edges, nbins):
 # NOTE: `static` (affine-read) is intentionally a deterministic sklearn LogisticRegression on the
 # recency-pooled encoding (see _train_static) — NOT a torch module — so it has no build_model branch.
 class _PerStepMLP(nn.Module):
-    """free per-step nonlinearity, no recurrence: per-step Linear->ReLU -> recency-pool -> linear."""
-    def __init__(self, in_dim, hidden, W):
+    """free per-step nonlinearity, no recurrence: per-step MLP (`depth` hidden ReLU layers) ->
+    recency-pool -> linear head. Depth/width are the C1 knob: this arm must have GENUINE capacity to
+    rebuild any 1-D transform from the scalar, else 'no arm beats log' is an undercapacity artifact, not
+    redundancy (review M2). It even receives the true recency weights W, so the test is maximally fair."""
+    def __init__(self, in_dim, hidden, W, depth=2):
         super().__init__()
         self.register_buffer("W", torch.tensor(W))
-        self.proj = nn.Sequential(nn.Linear(in_dim, hidden), nn.ReLU())
+        layers, d = [], in_dim
+        for _ in range(max(1, depth)):
+            layers += [nn.Linear(d, hidden), nn.ReLU()]
+            d = hidden
+        self.proj = nn.Sequential(*layers)
         self.head = nn.Linear(hidden, 1)
 
     def forward(self, x):
@@ -184,7 +191,7 @@ def build_model(model_spec: dict) -> nn.Module:
     kind, enc, in_dim = model_spec["kind"], model_spec["enc"], int(model_spec["in_dim"])
     W = model_spec["W"]; tc = model_spec["train_cfg"]
     if kind == "mlp":
-        return _PerStepMLP(in_dim, int(tc["dense_h"]), W)
+        return _PerStepMLP(in_dim, int(tc["mlp_hidden"]), W, depth=int(tc["mlp_depth"]))
     if kind == "gru":
         return _GRU(in_dim, int(tc["gru_hidden"]), enc, int(model_spec["K"]),
                     int(tc["embed_dim"]), int(tc["dense_h"]))
@@ -456,20 +463,28 @@ def deficit_corrected_lifts(records, seeds):
             for cond in conds:
                 for enc in encs:
                     arm = f"{arch}_{enc}"
-                    diffs = []
+                    diffs, raw_d, def_d = [], [], []
                     for s in range(seeds):
                         a_c, l_c = _prauc_by(records, cond, K, arm, s), _prauc_by(records, cond, K, logm, s)
                         a_0, l_0 = _prauc_by(records, "log_linear", K, arm, s), _prauc_by(records, "log_linear", K, logm, s)
                         if None in (a_c, l_c, a_0, l_0):
                             continue
+                        raw_d.append(a_c - l_c)              # DEPLOYMENT gap: arm vs log ON the condition
+                        def_d.append(a_0 - l_0)              # structural deficit: arm vs log on log_linear
                         diffs.append((a_c - l_c) - (a_0 - l_0))
                     if len(diffs) >= 2:
                         m, lo, hi, p = paired_t(diffs)      # seed-level paired-t (HYPOTHESIS §metric)
+                        rm, rlo, rhi, _ = paired_t(raw_d)   # raw-gap CI (review #1: report beside dc_lift)
                         out.append({"cell": {"arch": arch, "K": K, "condition": cond, "arm": arm},  # SSOT key
                                     "lift_mean": round(m, 4), "lift_lo": round(lo, 4), "lift_hi": round(hi, 4),
                                     "n_seeds": len(diffs),   # standard run-output contract fields
                                     "arch": arch, "K": K, "condition": cond, "arm": arm,  # report convenience
                                     "dc_lift": round(m, 4), "ci_lo": round(lo, 4), "ci_hi": round(hi, 4),
+                                    # decomposition dc_lift = raw_gap - deficit (deficit usually <=0) — makes the
+                                    # add-back explicit so weak/broken arms cannot masquerade as levers (review M1/M2/M8)
+                                    "raw_gap": round(rm, 4), "raw_gap_lo": round(rlo, 4), "raw_gap_hi": round(rhi, 4),
+                                    "raw_gap_excludes_zero": bool(rlo > 0 or rhi < 0),
+                                    "deficit": round(float(np.mean(def_d)), 4),
                                     "ci_excludes_zero": bool(lo > 0 or hi < 0), "p": p, "n": len(diffs)})
     # Holm-Bonferroni across the reported family (gate remains a single uncorrected pre-registered test)
     order = sorted(range(len(out)), key=lambda i: out[i]["p"])
@@ -481,25 +496,32 @@ def deficit_corrected_lifts(records, seeds):
 
 
 def control_gate(dc_lifts):
-    """POSITIVE control (halts if it fails): the estimand must detect the ROBUST lever — PLE on the sharp
-    non-monotone condition in the static affine-read model (deficit-corrected, K=6, CI excludes zero). If
-    the estimand cannot see the strongest known lever, it is blind and no GRU reading is interpretable.
-    Curvature (a weak lever) and the multivariate control are REPORTED findings, not halt conditions."""
+    """TWO POSITIVE controls, both halt if they fail — the estimand must detect the ROBUST lever (PLE on the
+    sharp non-monotone condition, deficit-corrected, K=6, CI excludes zero) in BOTH vehicles:
+      (a) static affine-read (deterministic logreg) — validates the estimand/label-DGP path;
+      (b) the trained GRU (`gru_ple`)              — validates the torch training/convergence path, so a
+          silently under-trained GRU cannot depress every GRU reading while (a) still fires (review M4).
+    Only if BOTH see the strongest known lever are the GRU curvature/smooth readings interpretable.
+    Curvature (a weak lever) and the multivariate control remain REPORTED findings, not halt conditions."""
     def _find(arch, cond, arm, K=6):
         for r in dc_lifts:
             if r["arch"] == arch and r["condition"] == cond and r["arm"] == arm and r["K"] == K:
                 return r
         return None
     sharp = _find("static", "sharp_mode", "static_ple")
-    pos_ok = bool(sharp and sharp["ci_lo"] > 0)             # robust instrument-validity lever
+    pos_ok = bool(sharp and sharp["ci_lo"] > 0)             # static-path instrument-validity lever
+    gru_sharp = _find("gru", "sharp_mode", "gru_ple")
+    gru_ok = bool(gru_sharp and gru_sharp["ci_lo"] > 0)     # GRU-path (training/convergence) validity lever
+    both_ok = pos_ok and gru_ok
     curv = _find("static", "monotone_curved", "static_ple")
     curv1 = _find("static", "monotone_curved", "static_ple", K=1)
-    return {"positive_control_fires": pos_ok,
-            "verdict": "TRUSTWORTHY" if pos_ok else "BLIND-INSTRUMENT — halt; GRU readings not interpretable",
+    return {"positive_control_fires": pos_ok, "gru_positive_control_fires": gru_ok,
+            "instrument_ok": both_ok,
+            "verdict": "TRUSTWORTHY" if both_ok else "BLIND-INSTRUMENT — halt; readings not interpretable",
             # reported findings (not gated):
             "curvature_lever_detected": bool(curv and curv["ci_lo"] > 0),
             "multivariate_control_ok": bool(curv1 and not curv1["ci_excludes_zero"] and curv and curv["ci_lo"] > 0),
-            "static_sharp": sharp, "static_curvature": curv, "static_curvature_K1": curv1}
+            "static_sharp": sharp, "gru_sharp": gru_sharp, "static_curvature": curv, "static_curvature_K1": curv1}
 
 
 # ============================================================ Hydra parser + FlowSpec
@@ -608,15 +630,21 @@ try:
             gate = self.analyses["an_controls"]["result"]
             lines = [f"# Consolidated encoding-capacity report — {self.experiment_name}",
                      f"\n**Instrument verdict:** {gate['verdict']}",
-                     f"- positive control (static PLE fires on sharp non-monotone): {gate['positive_control_fires']}",
+                     f"- static positive control (static PLE fires on sharp non-monotone): {gate['positive_control_fires']}",
+                     f"- GRU-path positive control (gru_ple fires on sharp non-monotone): {gate['gru_positive_control_fires']}",
                      f"- curvature lever detected (static, reported): {gate['curvature_lever_detected']}",
                      f"- multivariate control (curvature K=1~0, K=6>0): {gate['multivariate_control_ok']}",
-                     "\n## Deficit-corrected lifts (CI-excludes-zero marked)"]
-            lines.append("(H = Holm-significant across the family; * = raw CI excludes 0)")
+                     "\n## Deficit-corrected lifts — `gap` (uncorrected arm-vs-log gap) beside dc_lift (dc = gap - deficit)"]
+            # `gap` = the arm-minus-log gap ON the condition, BEFORE deficit-correction. NB: this is a quantity,
+            # NOT the `raw` ENCODER arm (static_raw/gru_raw) — those appear in the `arm` column. (fidelity CONCERN)
+            lines.append("(H = Holm-significant; * = dc CI excludes 0; g = gap CI excludes 0 = real uncorrected gap)")
             for r in sorted(self.lift_results, key=lambda x: (x["arch"], x["condition"], x["arm"], x["K"])):
                 flag = "H" if r.get("holm_significant") else ("*" if r["ci_excludes_zero"] else " ")
-                lines.append(f"{flag} {r['arch']:>6} K={r['K']} {r['condition']:>15} {r['arm']:>16}: "
-                             f"{r['dc_lift']:+.3f} [{r['ci_lo']:+.3f},{r['ci_hi']:+.3f}] holm_p={r.get('holm_p')}")
+                gflag = "g" if r.get("raw_gap_excludes_zero") else " "
+                lines.append(f"{flag}{gflag} {r['arch']:>6} K={r['K']} {r['condition']:>15} {r['arm']:>16}: "
+                             f"dc {r['dc_lift']:+.3f} [{r['ci_lo']:+.3f},{r['ci_hi']:+.3f}] | "
+                             f"gap {r['raw_gap']:+.3f} [{r['raw_gap_lo']:+.3f},{r['raw_gap_hi']:+.3f}] | "
+                             f"deficit {r['deficit']:+.3f} | holm_p={r.get('holm_p')}")
             self.report_md = "\n".join(lines)
             print(self.report_md, flush=True)
             self.next(self.end)
@@ -624,11 +652,14 @@ try:
         @step
         def end(self):
             gate = self.analyses["an_controls"]["result"]
-            print(f"[end] determinism={self.determinism} | instrument={gate['verdict']}", flush=True)
-            if not gate["positive_control_fires"]:
+            print(f"[end] determinism={self.determinism} | instrument={gate['verdict']} "
+                  f"(static={gate['positive_control_fires']}, gru={gate['gru_positive_control_fires']})", flush=True)
+            if not gate["instrument_ok"]:
                 raise RuntimeError(
-                    f"POSITIVE CONTROL FAILED — {gate['verdict']}. Report + lift artifacts persisted "
-                    "for post-mortem, but GRU readings are NOT interpretable; run marked FAILED.")
+                    f"POSITIVE CONTROL FAILED — {gate['verdict']} "
+                    f"(static={gate['positive_control_fires']}, gru={gate['gru_positive_control_fires']}). "
+                    "Report + lift artifacts persisted for post-mortem, but readings are NOT interpretable; "
+                    "run marked FAILED.")
 
     if __name__ == "__main__":
         ConsolidatedFlow()

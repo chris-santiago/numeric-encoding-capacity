@@ -43,11 +43,15 @@ log-odds). **Precondition comparator:** GBM + EWMA tabular baseline.
 
 ## Controls (hard, wired into the verdict — never print-only)
 
-- **Positive control (halts the run if it fails):** the estimand must detect the *robust* lever —
-  `static_linear` PLE on the **sharp non-monotone** condition (deficit-corrected, K=6, CI excludes zero).
-  If it cannot see the strongest known lever, it is blind and no GRU reading is trusted. Curvature is a
-  *weak* lever (barely CI-clear even in Cycle 7), so it is a **reported finding**, not a halt condition —
-  gating a hard halt on a noise-dominated lever would be fragile.
+- **Two positive controls (either failing halts the run):** the estimand must detect the *robust* lever —
+  PLE on the **sharp non-monotone** condition (deficit-corrected, K=6, CI excludes zero) — in **both**
+  vehicles: (a) `static_linear` PLE, which validates the estimand / label-DGP path; and (b) the trained
+  `gru_ple`, which validates the torch training/convergence path. A single static control cannot license
+  GRU readings: a silently under-trained GRU would depress every GRU lift while the static control still
+  fired (peer-review M4). Only when both see the strongest known lever are the GRU curvature/smooth
+  readings interpretable. Both controls gate on **sharp only** — curvature is a *weak* lever (barely
+  CI-clear even in Cycle 7), so it is a **reported finding**, not a halt condition; gating a hard halt on a
+  noise-dominated lever would be fragile.
 - **Curvature detection (reported):** `static_linear` curvature deficit-corrected lift — does the estimand
   also see the weaker monotone-curvature lever?
 - **Negative control:** `log_linear` condition — no arm beats `log`.

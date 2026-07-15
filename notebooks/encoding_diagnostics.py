@@ -24,9 +24,14 @@
 # | risk shape (of the *latent* fraud log-odds vs value) | lever? | encoder |
 # |---|---|---|
 # | log-linear (straight in log) | no | **`log` scalar** |
-# | monotone **curved** (smooth) | weak–moderate | **nonlinear projection** (learned, lower deficit) |
-# | **smooth** non-monotone (broad U) | no — gates absorb it | `log` scalar |
+# | monotone **curved** (smooth) | moderate (learned projection, real raw lift) | **nonlinear projection** |
+# | **smooth** non-monotone (broad U) | moderate, **multivariate** | **nonlinear projection** (PLE does *not* help) |
 # | **sharp / localized** non-monotone (band/spike) | **strongest** | **PLE** (fixed quantile knots) |
+#
+# Consolidated run (K=6, raw deployment gap over `log`): sharp → `gru_ple` **+0.35**; smooth → `gru_projection`
+# **+0.19** (`gru_ple` +0.03 n.s.); curved → `gru_projection` **+0.10**. The old "smooth → keep scalar" was a
+# PLE-only result: a learned projection *does* help a smooth hump; a fixed PLE basis does not. Fixed PLE wins
+# only for the *sharp* localized shape — where it helps even a free-nonlinearity model (optimization-hardness).
 #
 # ### Scope — read this
 # - **Marginal & order-agnostic.** Every test is a per-row `(value, label)` screen; row order is irrelevant,
@@ -171,8 +176,10 @@ def recommend(cls, informative, note, signal):
     enc = {"log-linear":          f"{b} scalar (no basis; gates+linear suffice)",
            "monotone-curved":     f"nonlinear projection on {b} (~{EMBED_DIM}d)",
            "non-monotone-sharp":  f"PLE on {b} (~{EMBED_DIM} bins)" + (" — top candidate" if pri == "high" else ""),
-           "non-monotone-smooth": f"{b} scalar (gates absorb a smooth hump; encoding low-value)"}[cls]
-    if cls in ("monotone-curved", "non-monotone-sharp") and pri != "high":
+           # consolidated run: a learned projection nets a real +0.19 raw over log on a smooth hump; PLE nets ~0.
+           # (multivariate lever — a per-feature screen understates it; confirm in the GRU A/B.)
+           "non-monotone-smooth": f"nonlinear projection on {b} (~{EMBED_DIM}d) — PLE does NOT help here"}[cls]
+    if cls in ("monotone-curved", "non-monotone-sharp", "non-monotone-smooth") and pri != "high":
         enc = f"[{pri}-signal — low priority] {enc}"
     return enc
 

@@ -10,4 +10,6 @@ seeds: 8
 bootstrap:
   n_resamples: 1000
   seed: 0
-max_workers: 1        # determinism contract: single_worker (GRU/torch nondeterminism under parallelism)
+max_workers: 1        # default only; SPEED knob (flow is `nondeterministic`, so branch parallelism cannot
+                      # change results — per-branch determinism is enforced inside the branch). Override freely
+                      # at the CLI, e.g. `run --max-workers 8`.

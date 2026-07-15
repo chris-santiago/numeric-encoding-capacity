@@ -8,7 +8,9 @@ batch: 512
 patience: 12          # val-AP early-stop patience
 lr_factor: 0.5        # ReduceLROnPlateau
 lr_patience: 4
-dense_h: 16           # per-step Dense/projection width source
+dense_h: 16           # per-step Dense/projection width source (gru_dense arm)
+mlp_hidden: 64        # perstep-MLP width — GENUINE capacity for the C1 free-nonlinearity arm (review M2)
+mlp_depth: 2          # perstep-MLP hidden-layer count (must rebuild a localized 1-D transform from scalar)
 embed_dim: 8          # PLE bins == projection output dim (matched-dim comparison)
 n_bins: 8             # PLE bins (few — deficit control)
 logreg_max_iter: 3000
