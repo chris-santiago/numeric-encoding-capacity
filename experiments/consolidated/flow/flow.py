@@ -27,10 +27,22 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.metrics import average_precision_score, log_loss, brier_score_loss
 
-DEVICE = ("mps" if getattr(torch.backends, "mps", None) and torch.backends.mps.is_available()
-          else "cuda" if torch.cuda.is_available() else "cpu")
+DEVICE = "cpu"          # canonical reproducible run: CPU + single-thread => single_worker determinism holds
+                        # (MPS/CUDA GRU kernels are not bit-reproducible; would break the determinism gate)
 _SPLIT_ID = {"train": 1, "val": 2, "test": 3}
 BAND_OFFSET = {"sharp_mode": 0.0, "sharp_off": 1.5}
+
+
+def _solve_intercept(logit, target, iters=60):
+    """Bisection for b s.t. mean(sigmoid(logit + b)) == target (realized prevalence = base_rate)."""
+    lo, hi = -25.0, 25.0
+    for _ in range(iters):
+        mid = 0.5 * (lo + hi)
+        if (1.0 / (1.0 + np.exp(-(logit + mid)))).mean() < target:
+            lo = mid
+        else:
+            hi = mid
+    return 0.5 * (lo + hi)
 
 
 # ============================================================ seam 1: make_data
@@ -64,21 +76,27 @@ def make_data(data_spec: dict, data_axes: dict, seed: int) -> dict:
     sctr = (ltr - mu) / sd
     gmu = np.array([_risk(cond, sctr[..., j], offset, bsig).mean() for j in range(K)])
     gsd = np.array([_risk(cond, sctr[..., j], offset, bsig).std() + 1e-9 for j in range(K)])
+    scd = {sp: (np.log(raw[sp]) - mu) / sd for sp in n}
+    aggd = {}                                            # per-split per-feature recency-aggregated risk
+    for sp in n:
+        A = np.zeros((n[sp], K))
+        for j in range(K):
+            g = (_risk(cond, scd[sp][..., j], offset, bsig) - gmu[j]) / gsd[j]
+            A[:, j] = (g * W[None, :]).sum(1)
+        aggd[sp] = A
+    am = aggd["train"].mean(0); asd = aggd["train"].std(0) + 1e-9   # aggregate-norm fit on TRAIN
+    def _logit(sp):
+        return (w * (aggd[sp] - am) / asd).sum(1)
+    b = _solve_intercept(_logit("train"), base)                     # intercept fit on TRAIN (mean prev = base)
+    rmu = raw["train"].reshape(-1, K).mean(0); rsd = raw["train"].reshape(-1, K).std(0) + 1e-9  # raw stats: TRAIN
     out = {}
     for sp in n:
-        sc = (np.log(raw[sp]) - mu) / sd
-        logit = np.zeros(n[sp])
-        for j in range(K):
-            g = (_risk(cond, sc[..., j], offset, bsig) - gmu[j]) / gsd[j]
-            agg = (g * W[None, :]).sum(1)
-            am, asd = agg.mean(), agg.std() + 1e-9
-            logit = logit + w * (agg - am) / asd
-        b = -np.quantile(logit, 1 - base)
-        prob = 1.0 / (1.0 + np.exp(-(logit + b)))
+        logit = _logit(sp) + b                          # single fixed DGP across splits
+        prob = 1.0 / (1.0 + np.exp(-logit))
         yrng = np.random.default_rng(seed * 101 + _SPLIT_ID[sp])
         y = (yrng.random(n[sp]) < prob).astype(np.float32)
-        out[sp] = {"raw": raw[sp], "sc": sc.astype(np.float32), "y": y, "logit": (logit + b).astype(np.float32)}
-    out["meta"] = {"mu": mu, "sd": sd, "W": W, "K": K, "L": L}
+        out[sp] = {"raw": raw[sp], "sc": scd[sp].astype(np.float32), "y": y, "logit": logit.astype(np.float32)}
+    out["meta"] = {"mu": mu, "sd": sd, "W": W, "K": K, "L": L, "raw_mu": rmu, "raw_sd": rsd}
     return out
 
 
@@ -101,9 +119,7 @@ def encode(enc, data_split, meta, edges, nbins):
     if enc in ("log", "projection", "dense"):
         return sc.astype(np.float32)                         # projection/dense embed inside the model
     if enc == "raw":
-        raw = data_split["raw"]
-        rmu, rsd = raw.reshape(-1, raw.shape[-1]).mean(0), raw.reshape(-1, raw.shape[-1]).std(0) + 1e-9
-        return ((raw - rmu) / rsd).astype(np.float32)
+        return ((data_split["raw"] - meta["raw_mu"]) / meta["raw_sd"]).astype(np.float32)  # TRAIN stats
     if enc == "ple":
         K = sc.shape[-1]; cols = []
         for j in range(K):
@@ -117,17 +133,8 @@ def encode(enc, data_split, meta, edges, nbins):
 
 
 # ============================================================ seam 2: build_model
-class _PoolLinear(nn.Module):
-    """static affine-read: recency-pool per-step encoding -> linear head (NO per-step nonlinearity)."""
-    def __init__(self, in_dim, W):
-        super().__init__()
-        self.register_buffer("W", torch.tensor(W))
-        self.head = nn.Linear(in_dim, 1)
-
-    def forward(self, x):
-        return self.head((x * self.W[None, :, None]).sum(1)).squeeze(-1)
-
-
+# NOTE: `static` (affine-read) is intentionally a deterministic sklearn LogisticRegression on the
+# recency-pooled encoding (see _train_static) — NOT a torch module — so it has no build_model branch.
 class _PerStepMLP(nn.Module):
     """free per-step nonlinearity, no recurrence: per-step Linear->ReLU -> recency-pool -> linear."""
     def __init__(self, in_dim, hidden, W):
@@ -168,8 +175,6 @@ class _GRU(nn.Module):
 def build_model(model_spec: dict) -> nn.Module:
     kind, enc, in_dim = model_spec["kind"], model_spec["enc"], int(model_spec["in_dim"])
     W = model_spec["W"]; tc = model_spec["train_cfg"]
-    if kind == "static":
-        return _PoolLinear(in_dim, W)
     if kind == "mlp":
         return _PerStepMLP(in_dim, int(tc["dense_h"]), W)
     if kind == "gru":
@@ -208,7 +213,7 @@ class TrainResult(dict):
 
 
 def _torch_train(model, Xtr, ytr, Xva, yva, seed, tc):
-    torch.manual_seed(seed)
+    torch.manual_seed(seed); torch.set_num_threads(1)      # single-thread => run-to-run identical on CPU
     model = model.to(DEVICE)
     opt = torch.optim.Adam(model.parameters(), lr=float(tc["lr"]))
     sched = torch.optim.lr_scheduler.ReduceLROnPlateau(opt, mode="max", factor=float(tc["lr_factor"]),
@@ -355,15 +360,16 @@ def bootstrap_ci(values, n_resamples: int = 1000, seed: int = 0):
     return float(v.mean()), float(np.percentile(boots, 2.5)), float(np.percentile(boots, 97.5))
 
 
-def paired_t_ci(diffs):
-    """Seed-level paired-t 95% CI (the estimand's documented interval; feeds the hard control gate)."""
+def paired_t(diffs):
+    """Seed-level paired-t: (mean, 95% lo, 95% hi, two-sided p). Feeds the control gate + the lift table."""
     from scipy import stats
     d = np.asarray(diffs, float)
     if len(d) < 2:
-        return float(d.mean()), float(d.mean()), float(d.mean())
-    m = d.mean(); se = d.std(ddof=1) / np.sqrt(len(d))
+        return float(d.mean()), float(d.mean()), float(d.mean()), 1.0
+    m = d.mean(); se = d.std(ddof=1) / np.sqrt(len(d)) + 1e-12
     tc = float(stats.t.ppf(0.975, df=len(d) - 1))
-    return float(m), float(m - tc * se), float(m + tc * se)
+    p = float(2 * stats.t.sf(abs(m / se), df=len(d) - 1))
+    return float(m), float(m - tc * se), float(m + tc * se), p
 
 
 # ============================================================ conf + cell helpers
@@ -422,9 +428,10 @@ def _prauc_by(records, condition, K, method, seed):
     return None
 
 
-def deficit_corrected_lifts(records, seeds, bseed):
+def deficit_corrected_lifts(records, seeds):
     """(arm - log)_condition - (arm - log)_log_linear, seed-paired, per (arch, K, condition, arm-enc).
-    This is THE estimand: it nets PLE's structural deficit measured at the log-adequate condition."""
+    This is THE estimand: it nets PLE's structural deficit measured at the log-adequate condition.
+    Holm-Bonferroni is applied across the reported family (the single-hypothesis gate is uncorrected)."""
     archs = {"static": ["ple", "raw"], "gru": ["ple", "projection", "dense", "raw"], "mlp": ["ple"]}
     conds = ["monotone_curved", "smooth_nonmono", "sharp_mode", "sharp_off"]
     out = []
@@ -442,10 +449,16 @@ def deficit_corrected_lifts(records, seeds, bseed):
                             continue
                         diffs.append((a_c - l_c) - (a_0 - l_0))
                     if len(diffs) >= 2:
-                        m, lo, hi = paired_t_ci(diffs)      # seed-level paired-t (HYPOTHESIS §metric)
+                        m, lo, hi, p = paired_t(diffs)      # seed-level paired-t (HYPOTHESIS §metric)
                         out.append({"arch": arch, "K": K, "condition": cond, "arm": arm,
                                     "dc_lift": round(m, 4), "ci_lo": round(lo, 4), "ci_hi": round(hi, 4),
-                                    "ci_excludes_zero": bool(lo > 0 or hi < 0), "n": len(diffs)})
+                                    "ci_excludes_zero": bool(lo > 0 or hi < 0), "p": p, "n": len(diffs)})
+    # Holm-Bonferroni across the reported family (gate remains a single uncorrected pre-registered test)
+    order = sorted(range(len(out)), key=lambda i: out[i]["p"])
+    m_tot = len(out)
+    for rank, i in enumerate(order):
+        out[i]["holm_p"] = round(min(1.0, out[i]["p"] * (m_tot - rank)), 4)
+        out[i]["holm_significant"] = bool(out[i]["holm_p"] < 0.05 and out[i]["dc_lift"] != 0)
     return out
 
 
@@ -529,7 +542,7 @@ try:
 
         @step
         def aggregate(self):
-            seeds = int(self.cfg["seeds"]); bseed = int(self.cfg["bootstrap"]["seed"])
+            seeds = int(self.cfg["seeds"])
             recs = filter_records(self.all_records, self.experiment_name)
             agg = {}
             for r in recs:
@@ -537,7 +550,7 @@ try:
                 agg.setdefault(k, []).append(r["test"]["prauc"])
             self.aggregate_results = [{"cell": dict(ck), "method": mth, "prauc_mean": round(float(np.mean(v)), 4)}
                                       for (ck, mth), v in agg.items()]
-            self.lift_results = deficit_corrected_lifts(recs, seeds, bseed)
+            self.lift_results = deficit_corrected_lifts(recs, seeds)
             self.next(self.an_lifts, self.an_controls, self.an_calibration)
 
         @card
@@ -581,10 +594,11 @@ try:
                      f"- curvature lever detected (static, reported): {gate['curvature_lever_detected']}",
                      f"- multivariate control (curvature K=1~0, K=6>0): {gate['multivariate_control_ok']}",
                      "\n## Deficit-corrected lifts (CI-excludes-zero marked)"]
+            lines.append("(H = Holm-significant across the family; * = raw CI excludes 0)")
             for r in sorted(self.lift_results, key=lambda x: (x["arch"], x["condition"], x["arm"], x["K"])):
-                flag = "*" if r["ci_excludes_zero"] else " "
+                flag = "H" if r.get("holm_significant") else ("*" if r["ci_excludes_zero"] else " ")
                 lines.append(f"{flag} {r['arch']:>6} K={r['K']} {r['condition']:>15} {r['arm']:>16}: "
-                             f"{r['dc_lift']:+.3f} [{r['ci_lo']:+.3f},{r['ci_hi']:+.3f}]")
+                             f"{r['dc_lift']:+.3f} [{r['ci_lo']:+.3f},{r['ci_hi']:+.3f}] holm_p={r.get('holm_p')}")
             self.report_md = "\n".join(lines)
             print(self.report_md, flush=True)
             self.next(self.end)
