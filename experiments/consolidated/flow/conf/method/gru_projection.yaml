@@ -1,0 +1,3 @@
+# method: gru_projection
+kind: gru
+enc: projection

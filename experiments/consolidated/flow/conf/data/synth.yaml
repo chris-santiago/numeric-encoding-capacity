@@ -1,0 +1,17 @@
+# Synthetic per-step feature sequences. K iid lognormal features; additive risk with EQUAL per-feature
+# weight (signal-share fix); condition sets the per-feature risk shape. Independent split → val for
+# early-stop + per-arm calibration. The `condition` and `K` data axes are applied by make_data.
+n_train: 4000
+n_val: 2000
+n_test: 4000
+seq_len: 32
+feat_sigma: 1.2          # lognormal log-std of each feature
+weight: 1.0              # per-feature logit weight — EQUAL across features (no signal-share confound)
+base_rate: 0.07
+decay: 0.9               # recency-weight decay for aggregation (order matters)
+band_sigma: 0.15         # sharp-band width (localized non-monotone)
+band_offset: 0.0         # overridden per condition (sharp_mode=0.0, sharp_off=1.5)
+split_convention: independent
+# defaults for the data axes (overridden per cell by data_axes):
+condition: monotone_curved
+K: 6

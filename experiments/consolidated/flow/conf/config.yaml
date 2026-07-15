@@ -1,0 +1,13 @@
+# Consolidated encoding-capacity experiment — Hydra root config.
+# method/ is NOT in defaults; methods are named per-experiment and loaded by name.
+defaults:
+  - data: synth
+  - training: default
+  - experiment: consolidated
+  - _self_
+
+seeds: 8
+bootstrap:
+  n_resamples: 1000
+  seed: 0
+max_workers: 1        # determinism contract: single_worker (GRU/torch nondeterminism under parallelism)

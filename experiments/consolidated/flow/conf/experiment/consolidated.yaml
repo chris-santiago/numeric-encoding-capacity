@@ -1,0 +1,30 @@
+# The consolidated experiment: architecture × risk-shape × multiplicity, all arms, all controls.
+name: consolidated
+
+# Cartesian axes. condition + K are DATA axes (change the generated dataset).
+axes:
+  condition: [log_linear, monotone_curved, smooth_nonmono, sharp_mode, sharp_off]
+  K: [1, 6]
+data_axes: [condition, K]
+
+# All arms (methods). kind = architecture (static/gru/mlp/oracle/tabular); enc = encoding.
+methods:
+  - static_log
+  - static_raw
+  - static_ple
+  - gru_log
+  - gru_raw
+  - gru_ple
+  - gru_projection
+  - gru_dense
+  - mlp_log
+  - mlp_ple
+  - oracle
+  - tabular
+method_overrides: {}
+
+split_convention: independent        # need val for early-stop + per-arm calibration
+diagnostics: [calibration]           # an_calibration branch (reliability + ECE per arm)
+requests_model: false
+requests_scores: true                # store test scores (for calibration + magnitude metrics)
+determinism: single_worker           # GRU/torch nondeterminism under parallelism; verified run-twice @1 worker

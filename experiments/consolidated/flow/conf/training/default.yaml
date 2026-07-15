@@ -1,0 +1,16 @@
+# Shared training knobs — AUTHORITATIVE for epochs/lr/batch/hidden (method YAMLs must omit these).
+# PROPER regime (the standing lesson): real capacity, high epoch cap with val early-stopping doing the
+# work, best-state restore, LR schedule. Every arm trained to convergence under identical budget.
+gru_hidden: 64
+epochs: 120            # cap; early stopping decides
+lr: 0.005
+batch: 512
+patience: 12          # val-AP early-stop patience
+lr_factor: 0.5        # ReduceLROnPlateau
+lr_patience: 4
+dense_h: 16           # per-step Dense/projection width source
+embed_dim: 8          # PLE bins == projection output dim (matched-dim comparison)
+n_bins: 8             # PLE bins (few — deficit control)
+logreg_max_iter: 3000
+gbm_max_iter: 300
+calib_max_iter: 200   # temperature-scaling fit iterations (per-arm calibration)

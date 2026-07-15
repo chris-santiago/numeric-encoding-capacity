@@ -1,0 +1,3 @@
+# Default Config value. Uses config.yaml defaults (experiment=consolidated, data=synth).
+# Override at run time: uv run flow.py --config-value cfg "hydra_overrides: [experiment=consolidated]" run
+hydra_overrides: []
