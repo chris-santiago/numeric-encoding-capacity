@@ -17,6 +17,27 @@ Run the gates in order. Each is cheaper than the next, and a failure at any gate
 not proceed. Most features stop at Gate C; the deficit (Gate D) is what most often kills an otherwise-real
 lever.
 
+## Evidence basis (read before trusting any number below)
+
+Every quantitative result in this protocol comes from **controlled synthetic experiments** (`*.py` in
+`experiments/gru_curvature_realdata/`), each with a firing static positive control. Synthetic is a
+*feature here, not a limitation*: because the per-step risk shape is constructed, a measured encoding
+effect is **causal and mechanism-isolating** — it cannot be a spurious correlation with an unobserved
+covariate the way a real-data result can. What that buys, and what it doesn't:
+
+- **Established (transferable, treat as settled):** the *mechanism* and *direction* — **which variable
+  governs** the outcome (target **sharpness**; PLE's **dimensionality deficit**; the **multivariate**
+  visibility requirement) and the **sign** of each effect. These are the load-bearing claims.
+- **Not established (do not deploy on):** whether a *particular real feature* actually has the shape in
+  question, or the *magnitude* at production scale. Every number below (+0.14, +0.18, ~−0.13, ~+0.45) is a
+  **directional PoC value** (L=32, 5–8 seeds), not a deployment figure.
+- **The bridge:** the real-data A/B (Cycle 6) tests whether these mechanisms are *present in real features*
+  and at what magnitude. Status: **precondition-gate step only — no real-data encoder comparison exists
+  yet.**
+
+Read the governing variables as settled; read every magnitude as "sign and rough scale under controlled
+conditions."
+
 ---
 
 ## Gate A — Architecture precondition (static check, once per model)
@@ -104,12 +125,15 @@ multivariate, shared-coordinate, 8-seed, Holm-corrected reruns settle it:
   +0.137 vs +0.148); PLE loses because it pays a **larger dimensionality deficit** (its `d` ramps all fire
   and load the recurrence) while the learned embed shapes its outputs at lower effective cost, and a smooth
   monotone transform is easy for SGD to learn.
-- **Sharp target (localized non-monotone) → fixed PLE wins, decisively** (`nonmono_encoders.py`): PLE beats
-  the learned embed by **+0.11 to +0.18 (Holm-sig)**, and at *both* band-at-mode and band-off-mode, so it is
-  robust to band location. The learned embed loses because SGD **cannot reliably place sharp ReLU knots** on
-  a narrow band (dead-ReLU / slow-migration), whereas PLE's fixed quantile knots blanket the range and
-  resolve the band for free. Since sharp non-monotone is the *strongest* lever (~+0.45), PLE is the right
-  tool exactly where encoding matters most.
+- **Sharp target (localized non-monotone) → fixed PLE wins, decisively** (`nonmono_encoders.py`, *synthetic
+  Gaussian bands, L=32 PoC, 8 seeds*): PLE beats the learned embed by **+0.11 to +0.18 (Holm-sig)** at
+  *both* of the two band locations tested (at-mode and off-mode s₀=1.5) — evidence of robustness to
+  location, not a full sweep. The learned embed loses because SGD **cannot reliably place sharp ReLU knots**
+  on a narrow band (dead-ReLU / slow-migration), whereas PLE's fixed quantile knots blanket the range and
+  resolve the band for free — a *mechanism* result, so the direction (sharp → PLE) transfers even though the
+  magnitude is a PoC value. Since sharp non-monotone is the *strongest* lever (~+0.45), PLE is the right
+  tool exactly where encoding matters most. Whether real count/ratio features actually carry sharp-band
+  risk is a Gate-C1 question on real data, not settled here.
 
 **Rule:** smooth/curved → learned per-feature embed; sharp/localized/non-monotone → fixed PLE.
 
