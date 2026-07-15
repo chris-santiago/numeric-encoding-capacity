@@ -12,6 +12,14 @@ CLAIMS.md. Domain seams are plain module functions (unit-testable via bare `impo
 """
 from __future__ import annotations
 
+import os
+# Force single-threaded BLAS BEFORE numpy/torch import so CPU reductions are bit-reproducible
+# (thread-count-dependent reduction order is what broke the order_independent determinism check).
+os.environ.setdefault("OMP_NUM_THREADS", "1")
+os.environ.setdefault("MKL_NUM_THREADS", "1")
+os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
+os.environ.setdefault("VECLIB_MAXIMUM_THREADS", "1")
+
 import pathlib
 import sys
 
@@ -457,7 +465,10 @@ def deficit_corrected_lifts(records, seeds):
                         diffs.append((a_c - l_c) - (a_0 - l_0))
                     if len(diffs) >= 2:
                         m, lo, hi, p = paired_t(diffs)      # seed-level paired-t (HYPOTHESIS §metric)
-                        out.append({"arch": arch, "K": K, "condition": cond, "arm": arm,
+                        out.append({"cell": {"arch": arch, "K": K, "condition": cond, "arm": arm},  # SSOT key
+                                    "lift_mean": round(m, 4), "lift_lo": round(lo, 4), "lift_hi": round(hi, 4),
+                                    "n_seeds": len(diffs),   # standard run-output contract fields
+                                    "arch": arch, "K": K, "condition": cond, "arm": arm,  # report convenience
                                     "dc_lift": round(m, 4), "ci_lo": round(lo, 4), "ci_hi": round(hi, 4),
                                     "ci_excludes_zero": bool(lo > 0 or hi < 0), "p": p, "n": len(diffs)})
     # Holm-Bonferroni across the reported family (gate remains a single uncorrected pre-registered test)

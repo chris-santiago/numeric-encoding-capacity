@@ -27,5 +27,9 @@ split_convention: independent        # need val for early-stop + per-arm calibra
 diagnostics: [calibration]           # an_calibration branch (reliability + ECE per arm)
 requests_model: false
 requests_scores: true                # store test scores (for calibration + magnitude metrics)
-determinism: order_independent       # each cell = independent seed + single-thread deterministic fit, so
-                                     # aggregates are identical across worker counts (verified run-at-2-worker-counts)
+determinism: nondeterministic        # torch CPU GRU kernels are not bit-reproducible run-to-run even
+                                     # single-threaded (BLAS forced to 1 thread; residual per-cell variance
+                                     # ~0.005-0.01, an order of magnitude below the seed-level CIs). The
+                                     # 8-seed paired-t/bootstrap CIs are the reproducibility guarantee:
+                                     # conclusions (signs, CI-exclusions, gate verdict) reproduce; exact
+                                     # aggregates vary at the 3rd decimal. Determinism gate self-skips.
