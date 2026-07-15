@@ -1,57 +1,62 @@
-# Report Addendum — Cycle 8 reference-model re-evaluation
+# Report Addendum — Cycle 8 reference-model re-evaluation (corrected)
 
-Step 9: the refutation (monotone value-curvature is not a PLE lever in a GRU) re-examined against the
-operational reality of deploying per-step encoding on a reference sequence model.
+> **Correction notice.** An earlier version of this addendum issued the deployment rule "do NOT PLE-encode a
+> monotone feature (curved or not); the GRU handles it." That rule followed from the retracted refutation
+> and is **wrong**. The corrected finding (`CONCLUSIONS.md`, `multivariate_control.py`) is that monotone
+> curvature IS a per-step lever in the affine GRU — but one masked by a large PLE dimensionality deficit.
+> The revised rule is below.
 
-## The deployment rule this sharpens
+Step 9: the corrected mechanism finding (multivariate monotone curvature is a real per-step PLE lever in an
+affine GRU, deficit-corrected +0.143, but the recurrence's PLE deficit is large ~−0.13 for K=6×12 bins)
+re-examined against deploying per-step encoding on a reference sequence model.
 
-Cycle 6 established that per-step PLE helps an affine-input GRU and is the best encoding — but its
-positive result rode entirely on **band-selective (non-monotone), cross-feature** structure. Cycle 8 now
-draws the boundary the earlier cycles left implicit:
+## The deployment rule (corrected)
 
-- **Do NOT PLE-encode a feature whose in-context risk is monotone in value — even if it is sharply
-  *curved* in value.** A GRU's gates already represent monotone curvature from a `log` scalar; PLE adds
-  only its structural deficit, and the deficit *grows* with the feature's importance. This holds for
-  monotone-log-linear (Cycle 6 negative control) and now for monotone-curved (Cycle 8) alike.
-- **Reserve per-step PLE for features with genuinely non-monotone / band-selective per-step risk** — the
-  one class the recurrence handles inefficiently (Cycle 6). That is where the +0.19–0.21 lifts came from.
+The decision is a **race between the curvature lever and PLE's dimensionality cost**, and in a GRU that cost
+is much larger than in a static model:
 
-## Correction to the prior encoding recommendation
+- **The lever is real:** on multivariate monotone-curved features, PLE unlocks ~+0.14 of signal the affine
+  GRU cannot reach on its own. Do not dismiss monotone (curved) features as "the recurrence handles them" —
+  it does not.
+- **But the cost is large and scales with bins × features:** ~−0.13 for 6 features × 12 bins fed per step
+  into the recurrence, versus ~−0.03 in a static head. Blanket per-step PLE therefore **loses on net** at
+  meaningful feature counts — the raw benefit reads ≈ 0 because the lever and the deficit nearly cancel.
+- **So: target narrowly and keep bins low.** Encode only the few features with the strongest curved-or-sharp
+  per-step risk, at few bins (8–12), so the summed dimensionality deficit stays below the summed lever. The
+  deficit-vs-(K, bins) curve is the deployment-decisive measurement and is not yet characterized at scale.
 
-A recommendation of the form "per-step PLE helps this GRU, so encode amount/Δt/count" is **too broad**.
-The correct, mechanism-grounded form is:
+This *supersedes* the earlier "curvature is not a GRU lever" rule and also refines Cycle 6's "try PLE on
+{amount, Δt}": the lever exists for the right features, but PLE's per-step width must be paid for.
 
-> Rank per-step features by **shape of risk-in-context**, not by curvature-vs-linear. Encode the ones
-> whose risk is **non-monotone / band-selective**; leave monotone features (log-linear *or* curved) on the
-> `log` scalar. For a monotone feature, PLE is expected to cost ~0.03–0.04 with no offsetting gain.
+## The precondition gate is a validated, reusable instrument (unchanged)
 
-Whether real amount/Δt/count-in-context carry non-monotone per-step signal is the empirical question the
-reference-model A/B must answer — and it is the *only* remaining open item.
+Cycle 3 failed silently (GRU lost to tabular, ignored order, never checked). Cycle 8 built and validated the
+gate: against a **GBM with EWMA aggregates** the GRU margin is +0.056 [+0.042, +0.070] and the order-shuffle
+drop is +0.236 [+0.187, +0.286], both CI-clear. Any real-data encoding study must gate against the stronger
+baseline or its "the GRU works here" premise is unearned.
 
-## The precondition gate is now a reusable, validated instrument
+## The estimand must carry positive controls (the hard lesson of this cycle)
 
-Cycle 3 failed silently because its GRU lost to a tabular baseline and ignored temporal order — never
-checked. Cycle 8 built and validated the missing gate:
+The single most important methodological output: **an encoding null is uninterpretable without a positive
+control that fires.** Two independent failures made the original refutation wrong — a single-curved-feature
+design (curvature invisible under a rank metric, per Cycle 7's multivariate requirement) and an un-netted
+dimensionality deficit. Neither was caught by the debate or by reading the raw numbers; both were caught
+only by running the *identical estimand* on a static model where the lever is known to exist and confirming
+it fires. Any real-data A/B must include: (a) a multivariate design, (b) the deficit-aware difference-of-
+differences, and (c) a static-head positive control on the same features.
 
-- **Baseline strength matters (F3).** Against a recency-agnostic logreg the gate passes too cheaply;
-  against a **GBM with EWMA aggregates matching the decay structure**, the GRU margin is +0.056
-  [+0.042, +0.070] and the order-shuffle drop is +0.236 [+0.187, +0.286] — both CI-clear. Any real-data
-  encoding study must gate against the *stronger* baseline or its "GRU works here" premise is unearned.
-- **Estimand power must be shown, not assumed (F1).** A flat deficit-corrected curve is only interpretable
-  alongside a free-nonlinearity arm (`dense`) and an oracle ceiling; without them, a null conflates "no
-  lever" with "no power." The real-data A/B must carry the same three-probe triangulation.
+## Operational cost of PLE (reaffirmed and sharpened)
 
-## Operational cost of PLE (unchanged, reaffirmed)
-
-- **Dimensionality & training stability:** many correlated bins per step into the recurrence need adequate
-  capacity and a stable early-stopping signal (Cycle 6 caveat, reaffirmed here — the un-hardened PoC's
-  spurious −0.19 deficit was pure undertraining). Under-resourced PLE-in-GRU shows spurious negative lifts.
+- **Dimensionality is the dominant cost in a recurrence, and it is larger than previously stated.** The
+  ~−0.13 GRU deficit for K=6×12 bins is the number that decides deployment, not the ~−0.04 static figure.
+  Favor few bins and selective targeting; the correlated-bins-into-the-recurrence cost is real (Cycle 6
+  training-sensitivity caveat, now quantified).
 - **Monitoring:** quantile bin edges are fit on training data and must be refit on drift; `log` has no
-  moving part. This cost is only worth paying where the non-monotone lever is real.
+  moving part.
 
 ## Direction-only; magnitudes are synthetic
 
-As in every cycle of this line, magnitudes are illustrative. Cycle 8 establishes **mechanism and
-direction** (monotone curvature is not a GRU lever; the deficit is), not a real-fraud number. The
-reference-model A/B — targeting non-monotone features, precondition-gated with the validated instrument —
-remains the only test that yields a deployable magnitude.
+Magnitudes (both the +0.143 lever and the −0.13 deficit) are synthetic and PoC-scale. Cycle 8 establishes
+**mechanism and direction** — curvature is a real GRU lever, masked by a large encoding deficit — not a
+real-fraud number. The reference-model A/B, targeting a small set of curved/sharp features at few bins with
+a static-head positive control, remains the only test that yields a deployable magnitude.

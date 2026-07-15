@@ -74,23 +74,26 @@ essential.
 
 ---
 
-## Outcome — Cycle 8 (REFUTED for the GRU)
+## Outcome — Cycle 8 (SUPPORTED, corrected — curvature IS a GRU lever, deficit-masked)
 
-**Review verdict: `critique_wins`** (4 FATAL / 2 MATERIAL findings; all remediated in a hardened PoC
-before any real-data compute). **Empirical verdict: the claim is REFUTED for the sequence model.**
+**Review verdict: `critique_wins`** (4 FATAL / 2 MATERIAL remediated). **Empirical verdict, after a
+positive-control audit that retracted then corrected an initial wrong conclusion: the claim is SUPPORTED —
+monotone curvature is a per-step PLE lever in the affine GRU, but masked in raw terms by a large PLE
+dimensionality deficit.**
 
-- **Scope tightening (F6, applied):** the decisive test is **single-feature-at-a-time**. Multi-feature /
-  correlated co-encoding synergy is deferred to a follow-up, not part of this claim.
-- **Deficit reference (F4, revised):** `amount` was replaced by a **marginal-matched, exactly-log-adequate
-  reference feature** — `amount` is weakly-curved (Cycle 2) and marginal-mismatched, so it was a
-  contaminated deficit baseline.
-- **What the hardened PoC found:** the deficit-corrected curvature benefit is ≤ 0 at every curvature level
-  (never crosses zero); a free per-step nonlinearity (`dense`) also gains nothing (+0.004); and the small
-  oracle gap (+0.032) is closed by no arm. → **No per-step-value lever exists in a GRU**; its gates absorb
-  monotone curvature. Cycle 7's static-model lever does not transfer.
-- **Precondition: PASS** against a strong GBM+EWMA baseline (margin +0.056 CI-clear; order-shuffle drop
-  +0.236 CI-clear) — so this is a genuine refutation, not a moot one.
-- **Step 6 (real-data monotone-curvature targeting): not justified, not run.**
+> The hardened single-feature PoC (`curvature_seq_poc2.py`) initially read this as REFUTED. That was
+> **wrong**: a single curved feature is invisible under a rank metric (Cycle 7's multivariate requirement),
+> so it measured only PLE's deficit. Retracted. See the correction notices in `CONCLUSIONS.md`.
 
-See `CONCLUSIONS.md` (unified static-vs-recurrent × monotone-vs-non-monotone theory) and
-`REPORT_ADDENDUM.md` (deployment rule + the standing non-monotone real-data A/B).
+- **Multivariate reproduction (`multivariate_control.py`, K=6):** positive controls FIRE (static curved
+  deficit-corrected +0.015 [+0.003,+0.027]; static non-monotone +0.373) → the estimand has power. **GRU
+  curved deficit-corrected +0.143 [+0.068,+0.218], CI-clear** → curvature is a genuine GRU lever; Cycle 7's
+  mechanism transfers.
+- **Deficit reality:** in the GRU, PLE costs ~−0.135 for K=6×12 bins (vs ~−0.03 static), so **raw**
+  `ple−log ≈ 0`; the lever is real but masked. Deployment needs selective targeting + few bins.
+- **Precondition: PASS** (GBM+EWMA baseline, margin +0.056; order-shuffle drop +0.236; both CI-clear).
+- **Open:** the GRU smooth-non-monotone cell is anomalous/ns (+0.035) — likely smooth-vs-sharp (Cycle 6's
+  sharp-band lever stands); needs a sharp-band multivariate rerun.
+
+See `CONCLUSIONS.md` (corrected verdict + graded static-vs-recurrent × shape table) and `REPORT_ADDENDUM.md`
+(corrected deployment rule + the deficit-vs-(K,bins) and real-data follow-ups).

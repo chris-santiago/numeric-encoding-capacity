@@ -1,60 +1,59 @@
 # Cycle 8 — Does monotone value-curvature give PLE a lever in a GRU?
 
-**Verdict: REFUTED for the sequence model.** Monotone value-curvature is a PLE lever in a *static
-affine-read* model (Cycle 7) but **not in a GRU** — the gate nonlinearities already absorb it. Per-step
-PLE on a monotone curved feature only imports its structural deficit. The lever that matters for a GRU is
-**non-monotonicity** (Cycle 6), not curvature. Full write-up: `CONCLUSIONS.md`, `REPORT_ADDENDUM.md`.
+**Verdict (corrected): YES — curvature IS a per-step PLE lever in the affine GRU, but masked by a large
+dimensionality deficit.** On multivariate monotone-curved features the deficit-corrected benefit is
+**+0.143 [+0.068, +0.218]** (CI-clear); Cycle 7's static-model mechanism transfers to the sequence model.
+But PLE's cost in the recurrence is large (~−0.13 for 6 features × 12 bins), so **raw** `ple−log ≈ 0` — the
+lever is real but net deployment value requires targeting few features at few bins. Full write-up:
+`CONCLUSIONS.md`, `REPORT_ADDENDUM.md`.
 
-This is the real-data successor to Cycle 3 (which failed an unchecked precondition). Step 6 on real data
-was **not run**: the hardened PoC's positive control shows there is nothing to find.
+> **Correction history.** The single-feature hardened PoC (`curvature_seq_poc2.py`) first concluded the
+> opposite — "monotone curvature is NOT a GRU lever (REFUTED)." That was **wrong**: a single curved feature
+> is invisible under a rank metric (Cycle 7's multivariate requirement), so it measured only PLE's deficit.
+> A positive-control audit (`positive_control.py`) exposed the flaw; the K=6 multivariate reproduction
+> (`multivariate_control.py`) reverses it. The retracted scripts are kept for the record.
 
 ## Quickstart
 
 ```bash
-uv run curvature_seq_poc.py       # plain PoC: machinery + precondition gate (Cycle-6 training regime)
-uv run curvature_seq_poc2.py      # HARDENED PoC: power sweep + gate + attribution; writes power curve PNG
+uv run multivariate_control.py    # AUTHORITATIVE: K=6 static-vs-GRU, firing positive controls
+uv run positive_control.py        # the audit that retracted the wrong single-feature verdict
+uv run curvature_seq_poc2.py      # RETRACTED single-feature PoC (kept for the record)
+uv run curvature_seq_poc.py       # plain PoC: precondition gate + Cycle-6 training regime
 ```
 
-## How the refutation was made trustworthy (not just a null)
+## Why the first verdict was wrong (two compounding flaws)
 
-The debate returned `critique_wins`: a bare null would be uninterpretable (blind metric vs no lever). The
-hardened PoC (`curvature_seq_poc2.py`) triangulates three probes so the null is decisive:
+1. **Single-feature invisibility.** Cycle 7 proved curvature is *multivariate*: one curved feature under
+   PR-AUC gives identical rankings for any monotone encoding (`ple−log = −0.000`). `poc2` used one curved
+   feature → no curvature signal was expressible. The single-feature positive control confirmed it did not
+   fire even in the static head (+0.004, ns). K=6 makes it visible (static +0.015, CI-clear).
+2. **Un-netted dimensionality deficit.** In the GRU, PLE costs ~−0.135 for K=6×12 bins; `poc2` read raw
+   `ple−log ≈ 0` and mislabeled "real lever − large deficit ≈ 0" as "no lever."
 
-1. **Power curve (F1):** sweep departure-from-log `k`; deficit-corrected benefit `AP(ple_count) −
-   AP(ple_ref)` stays ≤ 0 and gets *more* negative with curvature — PLE never wins.
-2. **`dense` arm (F5):** a learned per-step Linear→ReLU (superset of PLE's per-step expressivity) also
-   gains nothing (`dense − log = +0.004`). If any per-step transform could help, `dense` would → **no
-   per-step lever exists.**
-3. **Oracle ceiling (F4):** `log`-GRU sits +0.032 below the oracle, but `log`/`raw`/`ple_ref`/`dense` all
-   cluster — nothing closes the gap, so the residual is recurrent/capacity, not encoding-addressable.
+## The decisive result (K=6, static vs GRU, 5 seeds; deficit-corrected)
 
-log-loss and Brier (F2) corroborate PR-AUC; the precondition gate (F3) passes CI-clear against a GBM+EWMA
-baseline (margin +0.056; order-shuffle drop +0.236).
+| arch | condition | raw `ple−log` | deficit-corrected | CI>0 |
+|---|---|---|---|---|
+| static | curved | −0.019 | +0.015 [+0.003,+0.027] | ✅ positive control |
+| static | non-monotone | +0.339 | +0.373 [+0.346,+0.400] | ✅ sanity control |
+| **GRU** | **curved** | +0.008 | **+0.143 [+0.068,+0.218]** | ✅ **lever** |
+| GRU | non-monotone (smooth) | −0.101 | +0.035 [−0.021,+0.090] | ❌ anomalous |
 
 ## Pipeline
 
-`make_sequences` (curved count target + marginal-matched log-adequate reference, recency-weighted
-aggregation) → per-step encode (`fit_ref` on train only → `featurize`) → affine GRU (Cycle-6 regime:
-minibatch + val early-stop + best-state restore) → PR-AUC / log-loss / Brier on held-out test.
+`make_sequences` (K=6 iid per-step features; risk additive over features; recency-weighted; conditions
+curved/non-monotone/log-adequate) → per-step encode (PLE in **log space**, fit on train) → two
+architectures: **static** (recency-pool → logistic; affine-read, no per-step nonlinearity) and **GRU**
+(Cycle-6 regime). Deficit-corrected benefit = `(ple−log)_cond − (ple−log)_log-adequate`. Equal feature
+weights (confound fix). Reference model: `nn.GRU` reads `W·e(x_t)` affinely.
 
-Arms: `log` · `ple_count` (curved target) · `ple_ref` (clean deficit reference) · `dense`
-(free-nonlinearity probe) · `raw` (floor). Single-feature-at-a-time targeting (F6).
+## Known limitations / open
 
-## Key result (5-seed means, canonical k=1.4)
-
-| arm | PR-AUC | log-loss | Brier |
-|---|---|---|---|
-| log | 0.596 | 0.2954 | 0.0876 |
-| ple_count | **0.555** | 0.3058 | 0.0913 | ← PLE on the curved feature *hurts*
-| ple_ref | 0.597 | 0.2971 | 0.0883 |
-| dense | 0.600 | 0.2934 | 0.0870 |
-| raw | 0.597 | 0.2922 | 0.0864 |
-| oracle | 0.628 | — | — |
-
-## Known limitations / scope
-
-- **Synthetic, PoC scale** (L=32, hidden 32, 5 seeds). Non-monotonicity in a GRU is already settled at
-  L=300 by Cycle 6, so no scale-up of *this* question is needed.
-- **Single-feature-at-a-time** (F6): correlated/co-encoded multi-feature additivity is out of scope.
-- **Direction, not magnitude.** The only open item is Cycle 6's stated real-data A/B of the *non-monotone*
-  lever, now equipped with Cycle 8's validated precondition gate.
+- **GRU smooth-non-monotone is anomalous** (ns; negative raw) — likely smooth-vs-sharp (Cycle 6's sharp band
+  stands); needs a sharp-band multivariate rerun. Do not read it as "non-monotonicity isn't a GRU lever."
+- **PoC scale** (L=32, hidden 32, 5 seeds, synthetic). Direction, not magnitude.
+- **Deficit-vs-(K, bins) not characterized:** the deployment-decisive question is where the curvature lever
+  clears its own dimensionality cost (raw `ple−log > 0`).
+- **Real-data A/B** (Cycle 6's standing item) — target few curved/sharp features at few bins, with a
+  static-head positive control and the validated precondition gate.
