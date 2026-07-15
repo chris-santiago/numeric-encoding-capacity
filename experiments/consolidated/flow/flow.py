@@ -193,7 +193,8 @@ def _fit_temperature(val_logits, val_y, iters):
     def closure():
         opt.zero_grad(); loss = lossf(z / torch.exp(t), yv); loss.backward(); return loss
     opt.step(closure)
-    return float(torch.exp(t).item())
+    T = float(torch.exp(t).item())
+    return T if np.isfinite(T) and T > 1e-3 else 1.0        # guard: separable val can push LBFGS to T->0/NaN
 
 
 def _ece(probs, y, bins=10):
@@ -221,14 +222,16 @@ def _torch_train(model, Xtr, ytr, Xva, yva, seed, tc):
     lossf = nn.BCEWithLogitsLoss()
     Xt, yt = torch.tensor(Xtr), torch.tensor(ytr)
     batch, epochs, patience = int(tc["batch"]), int(tc["epochs"]), int(tc["patience"])
-    best, best_state, bad = -1.0, None, 0
+    # finite fallback: initial (untrained) weights, so a diverged run can NEVER leak NaN into scores
+    best_state = {k: v.clone() for k, v in model.state_dict().items()}
+    best, bad = -1.0, 0
 
     def _logits(X):
         model.eval(); out = []
         with torch.no_grad():
             for i in range(0, len(X), 4096):
                 out.append(model(torch.tensor(X[i:i + 4096]).to(DEVICE)).cpu().numpy())
-        return np.concatenate(out)
+        return np.nan_to_num(np.concatenate(out), nan=0.0, posinf=30.0, neginf=-30.0)
     for ep in range(epochs):
         model.train()
         g = torch.Generator().manual_seed(seed * 1000 + ep)
@@ -236,8 +239,12 @@ def _torch_train(model, Xtr, ytr, Xva, yva, seed, tc):
         for i in range(0, len(ytr), batch):
             idx = perm[i:i + batch]
             xb, yb = Xt[idx].to(DEVICE), yt[idx].to(DEVICE)
-            opt.zero_grad(); lossf(model(xb), yb).backward(); opt.step()
+            opt.zero_grad(); lossf(model(xb), yb).backward()
+            nn.utils.clip_grad_norm_(model.parameters(), 5.0)   # prevent RNN gradient explosion -> NaN
+            opt.step()
         ap = average_precision_score(yva, 1 / (1 + np.exp(-_logits(Xva))))
+        if not np.isfinite(ap):
+            ap = -1.0                                            # diverged epoch -> worst; keep best_state
         sched.step(ap)
         if ap > best + 1e-5:
             best, bad, best_state = ap, 0, {k: v.clone() for k, v in model.state_dict().items()}
@@ -245,14 +252,14 @@ def _torch_train(model, Xtr, ytr, Xva, yva, seed, tc):
             bad += 1
             if bad >= patience:
                 break
-    if best_state is not None:
-        model.load_state_dict(best_state)
+    model.load_state_dict(best_state)
     return model, _logits, best
 
 
 def _calibrate(val_logits, val_y, test_logits, iters):
-    T = _fit_temperature(val_logits, val_y, iters)
-    return 1.0 / (1.0 + np.exp(-test_logits / T)), T
+    T = _fit_temperature(np.nan_to_num(val_logits, nan=0.0, posinf=30.0, neginf=-30.0), val_y, iters)
+    probs = 1.0 / (1.0 + np.exp(-np.clip(test_logits / T, -30, 30)))
+    return np.nan_to_num(probs, nan=0.5), T
 
 
 def _prep_torch(method_spec, data, tc):

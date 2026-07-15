@@ -27,4 +27,5 @@ split_convention: independent        # need val for early-stop + per-arm calibra
 diagnostics: [calibration]           # an_calibration branch (reliability + ECE per arm)
 requests_model: false
 requests_scores: true                # store test scores (for calibration + magnitude metrics)
-determinism: single_worker           # GRU/torch nondeterminism under parallelism; verified run-twice @1 worker
+determinism: order_independent       # each cell = independent seed + single-thread deterministic fit, so
+                                     # aggregates are identical across worker counts (verified run-at-2-worker-counts)
