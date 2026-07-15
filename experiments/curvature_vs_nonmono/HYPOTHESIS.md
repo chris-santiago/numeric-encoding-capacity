@@ -114,3 +114,40 @@ in-context signals.
 - mlp head shows PLE>log anywhere → the "free-nonlinearity rebuilds the shape" premise is wrong, and the
   whole capacity account (not just this cycle) needs revisiting.
 - S2 precondition fails (oracle ≈ base) → the log-mismatched signal wasn't actually learnable; void.
+
+---
+
+## Hypothesis — Cycle 7 v2 (multivariate reformulation)
+
+**Why revised (Step-2 PoC finding).** The single-feature v1 design cannot test H_curv. PR-AUC
+(average precision) depends only on score *ranking*, and a linear (affine-read) head on any
+**monotone** encoding of a single feature yields scores monotone in that feature — so `raw`, `log`,
+and `ple` produce *identical rankings* for a monotone risk. The v1 PoC confirmed this: S2 gave
+`ple − log = −0.000` (exact tie), while only the non-monotone S3 opened a gap (`+0.343`).
+**Value-curvature is invisible at the single-feature margin** — it is a *multivariate* phenomenon:
+a monotone-but-curved feature's shape matters only through how it **combines additively** with other
+features. This is why the cycle-2 `C1` lift appeared in a multivariate fraud model, not in isolation.
+
+**Revised claim.** In an affine-read model, `ple` beats `log` for a **sum of monotone-but-log-mismatched
+features**, so value-curvature is a lever via feature *combination* — with **no non-monotonicity
+present**. Non-monotonicity remains a separate, single-feature-sufficient lever.
+
+**Design change.** Each shape becomes a **K-feature additive** signal, `logit = Σ_k f_k(x_k)`,
+`x_k = exp(latent_k)` i.i.d.:
+
+| Shape | per-feature `f_k` | monotone? | `log`-fit? |
+|-------|-------------------|-----------|-----------|
+| S1 | `std(log1p x_k)` | yes | yes (control) |
+| S2 | `std(rank x_k)` ≈ `Φ(latent_k)` | yes | **no — discriminator** |
+| S3 | `std((std log x_k)²)` | no (U) | no (control) |
+
+K ≈ 6, per-feature coefficient calibrated so the task is learnable (oracle AP ≫ base) at ~8.5% base
+rate. All S2 features are monotone in their own value, so any `ple`>`log` gap there is curvature via
+combination, not non-monotonicity.
+
+**Decisive test (unchanged in spirit).** `ple − log` on the **linear head** in the multivariate S2
+cell; CI excludes zero positive → curvature-via-combination is a lever, non-monotonicity not necessary.
+
+**Predicted double-dissociation.** linear head: `ple`>`log` in S2 **and** S3, ties S1. mlp head: ties
+all three. Everything else (2 heads, 4 encodings incl. `dense` at Step 6, seed-level paired-t + Holm,
+±0.005 equivalence, precondition/positive/negative controls) carries over from v1.
