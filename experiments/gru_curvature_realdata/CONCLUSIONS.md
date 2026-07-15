@@ -88,10 +88,40 @@ encoding **cost**, so the same lever that clears easily in a static head can be 
   +0.143). The estimand is the Cycle-7 difference-of-differences, but at n=5 with a large correction term
   the CI is wide; more seeds would tighten it.
 
-## Standing follow-ups
+## Resolved follow-ups (three experiments, positive-controlled)
 
-1. **Sharp-band multivariate GRU rerun** to resolve the smooth-vs-sharp non-monotone anomaly.
-2. **Deficit-vs-K/bins characterization** in the GRU: at what feature count / bin count does the curvature
-   lever clear its own dimensionality cost (raw `ple−log > 0`)? This is the deployment-decisive curve.
-3. **Real-data A/B** (Cycle 6's standing item), now with the validated precondition gate — targeting a
-   small set of curved-or-sharp features, few bins, per the deficit reality above.
+All three carried a static-head positive control (the discipline that caught the original error).
+
+- **A — deficit-vs-(K, bins) (`deficit_curve.py`).** The deficit-corrected curvature lever is robust across
+  configs (~+0.09–0.12), but **raw** `ple−log` (deployment) clears CI>0 at only **one** config — K=4,
+  bins=8 (+0.047 [+0.004, +0.089]). Too many bins (16) or features (K=8) → the dimensionality deficit
+  swamps the lever (raw → negative); too few → the lever isn't resolved. **PLE's net win is a narrow,
+  fragile ridge (~+0.05), not a broad regime.** (This script's *raw* static-control line mislabels itself
+  "blind"; the proper deficit-corrected static control fires in B/C on the same signal.)
+- **B — sharp vs smooth non-monotone (`sharp_vs_smooth.py`).** RESOLVED: the GRU **absorbs smooth**
+  non-monotonicity (+0.035 ns) but a **sharp/localized band fires +0.446** (both static controls fire).
+  The earlier smooth-quadratic null was a smooth-vs-sharp effect; **Cycle 6's sharp-band lever stands.**
+- **C — fixed PLE vs learned per-feature embed (`fixed_vs_learned.py`, multivariate, shared coordinate,
+  8 seeds, Holm).** RESOLVED: the **learned embed beats fixed PLE by +0.094 (Holm-sig)**. Deficit-corrected
+  the two unlock nearly identical curvature signal (+0.137 vs +0.148); the raw gap is PLE paying a **larger
+  dimensionality deficit** at equal width. Reverses the retracted single-feature "PLE wins on sharp" claim.
+
+## The organizing principle (what all of Cycles 6–8 reduce to)
+
+An affine GRU's gates are **smooth function approximators**, so the only per-step structure the affine read
+cannot build on its own is **localized/sharp** structure. That single fact orders every result:
+
+**sharp non-monotone (+0.446) ≫ monotone curvature (+0.143) ≫ smooth non-monotone (+0.035, absorbed) ≈
+log-linear (0).**
+
+Encoding buys *localized resolution*; its binding cost is *dimensionality*. Hence: PLE net-wins only on a
+narrow K/bins ridge, and a **learned per-feature embed dominates it** by delivering the same resolution at
+lower effective width.
+
+## Deployment recommendation (updated, final)
+
+For an affine GRU: **prefer a learned per-feature embed over fixed PLE** (same lever, lower deficit),
+**target few features** with **sharp or sharply-curved** per-step risk, at **low width**. Sharp
+non-monotone structure is the highest-value target; monotone curvature is a moderate lever; smooth
+non-monotone and log-linear features need no encoding. Standing external item: the real-data A/B (Cycle 6),
+now with the validated precondition gate and this targeting rule.

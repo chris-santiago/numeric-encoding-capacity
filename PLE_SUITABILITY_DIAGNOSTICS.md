@@ -61,10 +61,20 @@ mean/std/last. A recency-agnostic baseline passes the gate too cheaply.
 > **net of PLE's dimensionality deficit**, which in a GRU is large.
 
 **Two things must both be true for PLE to beat `log` in an affine GRU:** (1) the feature set carries a
-per-step lever the affine read can't form on its own (curvature or non-monotonicity — *multivariate*), and
-(2) that lever, summed over the encoded features, **exceeds PLE's dimensionality deficit** (~−0.13 for 6
-features × 12 bins in a GRU, vs ~−0.03 static). Measured wrong, either can hide the other — the trap that
-made Cycle 8's first pass conclude the opposite of the truth.
+per-step lever the affine read can't form on its own — *multivariate*, and (2) that lever, summed over the
+encoded features, **exceeds the encoder's dimensionality deficit**. Measured wrong, either can hide the
+other — the trap that made Cycle 8's first pass conclude the opposite of the truth.
+
+**Which shapes are levers (an affine GRU's gates are smooth approximators, so only *localized* structure is
+a lever):** sharp/localized non-monotone (**strongest**, deficit-corrected ~+0.45) ≫ monotone curvature
+(**moderate**, ~+0.14) ≫ smooth non-monotone (**absorbed by the gates**, ~0) ≈ log-linear (none). Target
+sharp or sharply-curved features; do not spend encoding on smooth non-monotone (a broad U/inverted-U) — the
+gates already handle it.
+
+**The deficit is usually the binding constraint, and it confines the raw net-win to a narrow ridge.** For
+fixed PLE, raw `ple−log > 0` held at only one config in a K×bins sweep (K≈4, bins≈8, +0.047); more bins or
+features push it negative. A **learned per-feature embed** pays a smaller deficit and so wins raw where PLE
+does not (C3) — prefer it.
 
 **C1. Screen: empirical risk-vs-value shape (necessary, not sufficient).** Bin the feature by percentile,
 plot empirical fraud rate per bin, fit an isotonic regression; the non-monotone fraction is `1 − R²_iso`.
@@ -86,14 +96,20 @@ not be skipped after Cycle 8:
 - A free-nonlinearity `mlp`/`dense` arm remains a useful corroborator ("does *any* per-step transform help"),
   but it too must be run multivariate — single-feature `dense`/`mlp` numbers are in the invisible regime.
 
-**C3. Fixed PLE vs a learned per-feature embed — UNRESOLVED at this stage.** A single-feature probe hinted
-that fixed PLE may beat a learned `Linear(1→d)→ReLU` embed on *sharp* non-monotonicity and that the learned
-embed degrades more gracefully on monotone shapes — **but those orderings did not survive review** (n=5 CIs
-barely clearing zero, no multiplicity correction, the two encoders compared in different coordinates
-(PLE on raw vs the embed on log), and the "sharp" band pinned at the density mode). The only claim that
-survives is qualitative: **a learned per-feature embed has a graceful ~0 floor where PLE pays a deficit**,
-so it is the lower-risk default when a feature's shape is uncertain. Any fixed-vs-learned *magnitude* needs
-a multivariate, multiplicity-corrected, shared-coordinate rerun before it can be asserted.
+**C3. Fixed PLE vs a learned per-feature embed — RESOLVED: prefer the learned embed.** A multivariate
+(K=6), shared-coordinate, 8-seed, Holm-corrected rerun (`fixed_vs_learned.py`) settles it: on monotone
+curvature the **learned `Linear(1→d)→ReLU` embed beats fixed PLE by +0.094 raw (Holm-sig)**. Both unlock
+nearly identical *lever* (deficit-corrected +0.137 vs +0.148); the gap is PLE paying a **larger
+dimensionality deficit** at equal width — its `d` fixed ramps all fire and load the recurrence, while the
+learned embed shapes its `d` outputs to carry the same signal at lower effective cost. Since the deficit is
+the binding deployment constraint (Gate D), the encoder that pays less deficit wins. **Default to the
+learned per-feature embed** (same lever, lower deficit, graceful ~0 floor on shapes with no lever). Scope:
+established for monotone curvature; for *sharp non-monotone* structure PLE's dense-quantile-knots-at-the-band
+could still compete — untested, so verify per feature-type before assuming the learned embed dominates there.
+
+> This reverses an earlier single-feature claim that "PLE wins on sharp." That comparison was confounded
+> (different coordinates: PLE on raw, embed on log; band pinned at the density mode; n=5, no multiplicity).
+> Fixed once → the ordering flips.
 
 ---
 
@@ -170,7 +186,8 @@ verify prod A/B)  (guard E1–E3)
 - **counts / recency aggregates** — genuine candidates (curvature *is* a lever now), but each must clear the
   deficit; encode only the few strongest at few bins.
 
-Open experiments this line leaves: (1) Cycle 6's real-data A/B of the **non-monotone** lever; (2) the
-**deficit-vs-(K, bins)** curve in a GRU — where the lever clears its own dimensionality cost; (3) the
-**sharp-vs-smooth non-monotone** anomaly in a GRU. All runnable with the Gate-B instrument validated in
-Cycle 8.
+Resolved by the Cycle 8 follow-up experiments: the **deficit-vs-(K, bins)** ridge (raw net-win only at
+K≈4/bins≈8), the **sharp-vs-smooth** anomaly (GRU absorbs smooth, sharp fires +0.45), and **fixed-vs-learned**
+(prefer the learned embed). The only external item left open is **Cycle 6's real-data A/B**, now runnable
+with the validated precondition gate and the targeting rule above (few sharp/curved features, low width,
+learned per-feature embed).
