@@ -40,6 +40,24 @@ conditions."
 
 ---
 
+## Illustrations — recognizing the shapes (synthetic)
+
+These figures make the shape vocabulary concrete. Regenerate them (and the per-shape metrics) with `uv run figures/ple_suitability_figures.py`; all use the consolidated flow's own risk-shape DGP on a standardized-log feature $s$.
+
+**A "sharp band" — the PLE-suitable case.** Fraud log-odds is a narrow localized bump ($\exp(-s^2/2\sigma^2)$, $\sigma = 0.15$): risk is $\approx 0$ across the whole value range except a thin slice where it spikes. An affine (monotone) read of $s$ cannot form a low-then-high-then-low shape; PLE's quantile knots can.
+
+![Sharp band: feature histogram with fraud-rate overlay](figures/ple_fig1_sharp_band_histogram.png)
+
+**The same band as PLE sees it (quantile bins).** Because quantile bins are narrow where data is dense (the mode), the band lands in a few contiguous central bins. Note the resolution/deficit tradeoff: 8 bins (PLE's default) dilute the in-band rate to $\approx 32\%$; 20 bins resolve it to $\approx 71\%$. Bin width must approach band width to capture the lever, and more bins cost more deficit.
+
+![Fraud rate by 8 vs 20 quantile bins](figures/ple_fig2_sharp_band_quantile.png)
+
+**Telling the four shapes apart.** The screen bins by quantile and reads $\operatorname{logit}(\text{fraud rate})$ (removing the sigmoid link), then thresholds: `non_mono` $= 1 - R^2_{\text{isotonic}}$, `contig` $=$ fraction of excess-risk mass in the largest contiguous run, `curv_gap` $= R^2_{\text{isotonic}} - R^2_{\text{linear}}$. A **sharp band** is non-monotone with one contiguous elevated run (`non_mono` high, `contig` high) → **PLE**. A **smooth U** is non-monotone but elevated at *both* ends (`contig` low) → **learned projection**. **Monotone-curved** and **log-linear** are monotone (`non_mono` $\approx 0$), split by `curv_gap`: curved → projection, straight → keep the `log` scalar.
+
+![Four risk shapes: fraud rate and logit(rate) over quantile bins, with diagnostic verdict](figures/ple_fig3_risk_shapes_diagnostic.png)
+
+---
+
 ## Gate A — Architecture precondition (static check, once per model)
 
 **A1. Is the per-step numeric path truly affine?** Confirm numerics enter the recurrence as `W·x_t` with
