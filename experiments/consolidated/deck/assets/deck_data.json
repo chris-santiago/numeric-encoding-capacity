@@ -1,0 +1,179 @@
+{
+  "run_id": "1784135301155957",
+  "K": 6,
+  "gru_prauc": {
+    "log-lin": {
+      "raw": 0.3707,
+      "log": 0.5314,
+      "ple": 0.4563,
+      "projection": 0.5074,
+      "dense": 0.5195,
+      "oracle": 0.555
+    },
+    "curved": {
+      "raw": 0.4422,
+      "log": 0.3188,
+      "ple": 0.342,
+      "projection": 0.4194,
+      "dense": 0.3437,
+      "oracle": 0.6083
+    },
+    "smooth": {
+      "raw": 0.2325,
+      "log": 0.2846,
+      "ple": 0.3144,
+      "projection": 0.4719,
+      "dense": 0.4779,
+      "oracle": 0.6058
+    },
+    "sharp": {
+      "raw": 0.0843,
+      "log": 0.0831,
+      "ple": 0.4288,
+      "projection": 0.1786,
+      "dense": 0.1137,
+      "oracle": 0.6107
+    },
+    "sharp-off": {
+      "raw": 0.194,
+      "log": 0.1395,
+      "ple": 0.2061,
+      "projection": 0.1768,
+      "dense": 0.1506,
+      "oracle": 0.6466
+    }
+  },
+  "mlp_prauc": {
+    "log-lin": {
+      "log": 0.4436,
+      "ple": 0.4447
+    },
+    "curved": {
+      "log": 0.3083,
+      "ple": 0.3983
+    },
+    "smooth": {
+      "log": 0.3823,
+      "ple": 0.3059
+    },
+    "sharp": {
+      "log": 0.1315,
+      "ple": 0.5179
+    },
+    "sharp-off": {
+      "log": 0.1706,
+      "ple": 0.2132
+    }
+  },
+  "crossover_raw_gap": {
+    "log-lin": {},
+    "curved": {
+      "ple": {
+        "raw_gap": 0.0232,
+        "sig": false
+      },
+      "projection": {
+        "raw_gap": 0.1006,
+        "sig": true
+      }
+    },
+    "smooth": {
+      "ple": {
+        "raw_gap": 0.0298,
+        "sig": false
+      },
+      "projection": {
+        "raw_gap": 0.1874,
+        "sig": true
+      }
+    },
+    "sharp": {
+      "ple": {
+        "raw_gap": 0.3457,
+        "sig": true
+      },
+      "projection": {
+        "raw_gap": 0.0956,
+        "sig": true
+      }
+    },
+    "sharp-off": {
+      "ple": {
+        "raw_gap": 0.0665,
+        "sig": true
+      },
+      "projection": {
+        "raw_gap": 0.0372,
+        "sig": true
+      }
+    }
+  },
+  "addback": [
+    {
+      "label": "raw \u00b7 sharp",
+      "enc": "raw",
+      "cond": "sharp",
+      "raw_gap": 0.0012,
+      "raw_gap_lo": -0.0078,
+      "raw_gap_hi": 0.0102,
+      "dc_lift": 0.1619,
+      "deficit": -0.1607,
+      "raw_gap_sig": false
+    },
+    {
+      "label": "ple \u00b7 sharp",
+      "enc": "ple",
+      "cond": "sharp",
+      "raw_gap": 0.3457,
+      "raw_gap_lo": 0.3122,
+      "raw_gap_hi": 0.3792,
+      "dc_lift": 0.4208,
+      "deficit": -0.0751,
+      "raw_gap_sig": true
+    },
+    {
+      "label": "projection \u00b7 smooth",
+      "enc": "projection",
+      "cond": "smooth",
+      "raw_gap": 0.1874,
+      "raw_gap_lo": 0.1194,
+      "raw_gap_hi": 0.2554,
+      "dc_lift": 0.2113,
+      "deficit": -0.024,
+      "raw_gap_sig": true
+    },
+    {
+      "label": "ple \u00b7 smooth",
+      "enc": "ple",
+      "cond": "smooth",
+      "raw_gap": 0.0298,
+      "raw_gap_lo": -0.055,
+      "raw_gap_hi": 0.1147,
+      "dc_lift": 0.1049,
+      "deficit": -0.0751,
+      "raw_gap_sig": false
+    },
+    {
+      "label": "projection \u00b7 curved",
+      "enc": "projection",
+      "cond": "curved",
+      "raw_gap": 0.1006,
+      "raw_gap_lo": 0.0727,
+      "raw_gap_hi": 0.1286,
+      "dc_lift": 0.1246,
+      "deficit": -0.024,
+      "raw_gap_sig": true
+    },
+    {
+      "label": "ple \u00b7 curved",
+      "enc": "ple",
+      "cond": "curved",
+      "raw_gap": 0.0232,
+      "raw_gap_lo": -0.0042,
+      "raw_gap_hi": 0.0506,
+      "dc_lift": 0.0983,
+      "deficit": -0.0751,
+      "raw_gap_sig": false
+    }
+  ]
+}

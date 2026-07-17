@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1050 460" font-family="Helvetica,Arial,sans-serif">
+<text x="525.0" y="36.0" font-size="26" fill="#1a4a7a" text-anchor="middle" font-weight="bold">Five encoders of one numeric feature</text>
+<text x="525.0" y="66.0" font-size="16" fill="#444" text-anchor="middle" font-weight="normal">all consume the same log scalar — they differ in whether the nonlinearity is fixed or learned, and where it lives</text>
+<text x="319.0" y="128.0" font-size="16" fill="#6b7280" text-anchor="middle" font-weight="bold">FIXED · applied before the model</text>
+<text x="834.0" y="128.0" font-size="16" fill="#6b7280" text-anchor="middle" font-weight="bold">LEARNED · inside the model</text>
+<line x1="628.0" y1="116.0" x2="628.0" y2="348.0" stroke="#d1d5db" stroke-width="1.5" stroke-dasharray="5 4"/>
+<rect x="20.0" y="150.0" width="186.0" height="168.0" rx="10" fill="#f3f4f6" stroke="#6b7280" stroke-width="2"/>
+<text x="113.0" y="184.0" font-size="22" fill="#6b7280" text-anchor="middle" font-weight="bold" font-family="SFMono-Regular,Menlo,monospace">raw</text>
+<line x1="36.0" y1="196.0" x2="190.0" y2="196.0" stroke="#6b7280" stroke-width="1"/>
+<text x="113.0" y="224.0" font-size="14" fill="#333" text-anchor="middle" font-weight="normal">standardized value</text>
+<text x="113.0" y="246.0" font-size="14" fill="#333" text-anchor="middle" font-weight="normal">no transform</text>
+<text x="113.0" y="284.0" font-size="15" fill="#6b7280" text-anchor="middle" font-weight="bold" font-family="SFMono-Regular,Menlo,monospace">dim 1</text>
+<rect x="226.0" y="150.0" width="186.0" height="168.0" rx="10" fill="#eaf1f8" stroke="#1a4a7a" stroke-width="2"/>
+<text x="319.0" y="184.0" font-size="22" fill="#1a4a7a" text-anchor="middle" font-weight="bold" font-family="SFMono-Regular,Menlo,monospace">log</text>
+<line x1="242.0" y1="196.0" x2="396.0" y2="196.0" stroke="#1a4a7a" stroke-width="1"/>
+<text x="319.0" y="224.0" font-size="14" fill="#333" text-anchor="middle" font-weight="normal">standardized log1p(x)</text>
+<text x="319.0" y="246.0" font-size="14" fill="#333" text-anchor="middle" font-weight="normal">the reference scalar</text>
+<text x="319.0" y="284.0" font-size="15" fill="#1a4a7a" text-anchor="middle" font-weight="bold" font-family="SFMono-Regular,Menlo,monospace">dim 1</text>
+<rect x="432.0" y="150.0" width="186.0" height="168.0" rx="10" fill="#f7e2e2" stroke="#b91c1c" stroke-width="2"/>
+<text x="525.0" y="184.0" font-size="22" fill="#b91c1c" text-anchor="middle" font-weight="bold" font-family="SFMono-Regular,Menlo,monospace">ple</text>
+<line x1="448.0" y1="196.0" x2="602.0" y2="196.0" stroke="#b91c1c" stroke-width="1"/>
+<text x="525.0" y="224.0" font-size="14" fill="#333" text-anchor="middle" font-weight="normal">8 quantile bins on the</text>
+<text x="525.0" y="246.0" font-size="14" fill="#333" text-anchor="middle" font-weight="normal">log coordinate (FIXED)</text>
+<text x="525.0" y="284.0" font-size="15" fill="#b91c1c" text-anchor="middle" font-weight="bold" font-family="SFMono-Regular,Menlo,monospace">dim 8</text>
+<rect x="638.0" y="150.0" width="186.0" height="168.0" rx="10" fill="#e4f0e6" stroke="#15803d" stroke-width="2"/>
+<text x="731.0" y="184.0" font-size="22" fill="#15803d" text-anchor="middle" font-weight="bold" font-family="SFMono-Regular,Menlo,monospace">projection</text>
+<line x1="654.0" y1="196.0" x2="808.0" y2="196.0" stroke="#15803d" stroke-width="1"/>
+<text x="731.0" y="224.0" font-size="14" fill="#333" text-anchor="middle" font-weight="normal">Linear(1→8)→ReLU</text>
+<text x="731.0" y="246.0" font-size="14" fill="#333" text-anchor="middle" font-weight="normal">per feature (LEARNED)</text>
+<text x="731.0" y="284.0" font-size="15" fill="#15803d" text-anchor="middle" font-weight="bold" font-family="SFMono-Regular,Menlo,monospace">dim 8</text>
+<rect x="844.0" y="150.0" width="186.0" height="168.0" rx="10" fill="#efe6fb" stroke="#7c3aed" stroke-width="2"/>
+<text x="937.0" y="184.0" font-size="22" fill="#7c3aed" text-anchor="middle" font-weight="bold" font-family="SFMono-Regular,Menlo,monospace">dense</text>
+<line x1="860.0" y1="196.0" x2="1014.0" y2="196.0" stroke="#7c3aed" stroke-width="1"/>
+<text x="937.0" y="224.0" font-size="14" fill="#333" text-anchor="middle" font-weight="normal">joint Linear→ReLU over</text>
+<text x="937.0" y="246.0" font-size="14" fill="#333" text-anchor="middle" font-weight="normal">all features (LEARNED)</text>
+<text x="937.0" y="284.0" font-size="15" fill="#7c3aed" text-anchor="middle" font-weight="bold" font-family="SFMono-Regular,Menlo,monospace">dim h</text>
+<text x="525.0" y="384.0" font-size="16" fill="#222" text-anchor="middle" font-weight="bold">PLE and projection are dimension-matched (8) on purpose: the fixed-vs-learned comparison is fair.</text>
+<text x="525.0" y="446.0" font-size="14" fill="#6b7280" text-anchor="middle" font-weight="normal" font-style="italic">Source: flow.py encode() and _GRU embedding modes.</text>
+</svg>

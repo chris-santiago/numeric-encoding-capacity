@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1050 566" font-family="Helvetica,Arial,sans-serif">
+<text x="525.0" y="34.0" font-size="26" fill="#1a4a7a" text-anchor="middle" font-weight="bold">One account, two obstacles</text>
+<rect x="30.0" y="54.0" width="495.0" height="78.0" rx="8" fill="#eaf1f8" stroke="#1a4a7a" stroke-width="1.5"/>
+<text x="46.0" y="80.0" font-size="17" fill="#1a4a7a" text-anchor="start" font-weight="bold">Obstacle 1 — can't FORM the shape</text>
+<text x="46.0" y="104.0" font-size="14" fill="#333" text-anchor="start" font-weight="normal">affine read: per-step class = span(e).</text>
+<text x="46.0" y="122.0" font-size="14" fill="#333" text-anchor="start" font-weight="normal">A richer basis widens it. Any non-log-linear shape.</text>
+<rect x="525.0" y="54.0" width="495.0" height="78.0" rx="8" fill="#f7e2e2" stroke="#b91c1c" stroke-width="1.5"/>
+<text x="541.0" y="80.0" font-size="17" fill="#b91c1c" text-anchor="start" font-weight="bold">Obstacle 2 — can't FIND the shape</text>
+<text x="541.0" y="104.0" font-size="14" fill="#333" text-anchor="start" font-weight="normal">SGD cannot locate a σ≈0.15 bump from a scalar.</text>
+<text x="541.0" y="122.0" font-size="14" fill="#333" text-anchor="start" font-weight="normal">A fixed quantile basis hands it over. Sharp only.</text>
+<text x="470.0" y="176.0" font-size="17" fill="#222" text-anchor="middle" font-weight="bold">smooth / curved target</text>
+<text x="810.0" y="176.0" font-size="17" fill="#222" text-anchor="middle" font-weight="bold">sharp (localized) target</text>
+<text x="284.0" y="248.0" font-size="15" fill="#222" text-anchor="end" font-weight="bold">affine-read</text>
+<text x="284.0" y="268.0" font-size="15" fill="#222" text-anchor="end" font-weight="bold">(GRU, static)</text>
+<rect x="300.0" y="190.0" width="328.0" height="120.0" rx="10" fill="#e4f0e6" stroke="#15803d" stroke-width="2"/>
+<text x="464.0" y="226.0" font-size="18" fill="#15803d" text-anchor="middle" font-weight="bold">basis helps</text>
+<text x="464.0" y="256.0" font-size="15" fill="#222" text-anchor="middle" font-weight="normal" font-family="SFMono-Regular,Menlo,monospace">learned projection</text>
+<text x="464.0" y="286.0" font-size="14" fill="#6b7280" text-anchor="middle" font-weight="normal" font-style="italic">Obstacle 1</text>
+<rect x="640.0" y="190.0" width="328.0" height="120.0" rx="10" fill="#f7e2e2" stroke="#b91c1c" stroke-width="2"/>
+<text x="804.0" y="226.0" font-size="18" fill="#b91c1c" text-anchor="middle" font-weight="bold">basis helps</text>
+<text x="804.0" y="256.0" font-size="15" fill="#222" text-anchor="middle" font-weight="normal" font-family="SFMono-Regular,Menlo,monospace">fixed PLE</text>
+<text x="804.0" y="286.0" font-size="14" fill="#6b7280" text-anchor="middle" font-weight="normal" font-style="italic">Obstacles 1 + 2</text>
+<text x="284.0" y="380.0" font-size="15" fill="#222" text-anchor="end" font-weight="bold">free-nonlinearity</text>
+<text x="284.0" y="400.0" font-size="15" fill="#222" text-anchor="end" font-weight="bold">(MLP)</text>
+<rect x="300.0" y="322.0" width="328.0" height="120.0" rx="10" fill="#f3f4f6" stroke="#6b7280" stroke-width="2"/>
+<text x="464.0" y="358.0" font-size="18" fill="#6b7280" text-anchor="middle" font-weight="bold">redundant / harmful</text>
+<text x="464.0" y="388.0" font-size="15" fill="#222" text-anchor="middle" font-weight="normal" font-family="SFMono-Regular,Menlo,monospace">— (MLP forms it)</text>
+<text x="464.0" y="418.0" font-size="14" fill="#6b7280" text-anchor="middle" font-weight="normal" font-style="italic">neither</text>
+<rect x="640.0" y="322.0" width="328.0" height="120.0" rx="10" fill="#f7e2e2" stroke="#b91c1c" stroke-width="2"/>
+<text x="804.0" y="358.0" font-size="18" fill="#b91c1c" text-anchor="middle" font-weight="bold">basis helps</text>
+<text x="804.0" y="388.0" font-size="15" fill="#222" text-anchor="middle" font-weight="normal" font-family="SFMono-Regular,Menlo,monospace">fixed PLE  (+0.39)</text>
+<text x="804.0" y="418.0" font-size="14" fill="#6b7280" text-anchor="middle" font-weight="normal" font-style="italic">Obstacle 2</text>
+<text x="525.0" y="524.0" font-size="19" fill="#d97706" text-anchor="middle" font-weight="bold">A basis helps when the model cannot FORM the shape, or cannot FIND it by SGD.</text>
+<text x="525.0" y="550.0" font-size="15" fill="#6b7280" text-anchor="middle" font-weight="normal" font-style="italic">Sharp non-monotonicity trips both — which is why it is the largest, most universal lever (it even helps the MLP).</text>
+</svg>
