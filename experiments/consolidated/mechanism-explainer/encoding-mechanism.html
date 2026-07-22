@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Why encoding a scalar can beat the raw number · the mechanism</title>
+<style>
+  :root {
+    --paper:#f3f5f7; --panel:#ffffff; --ink:#14202b; --muted:#566472; --faint:#8593a1; --hair:#dde3ea;
+    --accent:#1b3b6f; --accent-2:#2f6db0; --accent-bg:#e9f0f8; --accent-br:#bcd2e8;
+    --red:#b23b2e;  --red-bg:#f7e7e3;  --red-br:#e3b3a9;
+    --green:#2f7d4f; --green-bg:#e5f1ea; --green-br:#b1d6c1;
+    --amber:#b9791a; --amber-bg:#f7edd7; --amber-br:#e4cd97;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper:#0e141b; --panel:#172230; --ink:#e7edf4; --muted:#9fadbb; --faint:#6d7c8b; --hair:#26333f;
+      --accent:#6ea6e4; --accent-2:#8fc2f0; --accent-bg:#14283d; --accent-br:#2b486a;
+      --red:#e0806e;  --red-bg:#341f1b;  --red-br:#5b352d;
+      --green:#66c58c; --green-bg:#142a1f; --green-br:#2c4e3a;
+      --amber:#dca94e; --amber-bg:#2c2413; --amber-br:#524226;
+    }
+  }
+  :root[data-theme="light"] {
+    --paper:#f3f5f7; --panel:#ffffff; --ink:#14202b; --muted:#566472; --faint:#8593a1; --hair:#dde3ea;
+    --accent:#1b3b6f; --accent-2:#2f6db0; --accent-bg:#e9f0f8; --accent-br:#bcd2e8;
+    --red:#b23b2e; --red-bg:#f7e7e3; --red-br:#e3b3a9;
+    --green:#2f7d4f; --green-bg:#e5f1ea; --green-br:#b1d6c1;
+    --amber:#b9791a; --amber-bg:#f7edd7; --amber-br:#e4cd97;
+  }
+  :root[data-theme="dark"] {
+    --paper:#0e141b; --panel:#172230; --ink:#e7edf4; --muted:#9fadbb; --faint:#6d7c8b; --hair:#26333f;
+    --accent:#6ea6e4; --accent-2:#8fc2f0; --accent-bg:#14283d; --accent-br:#2b486a;
+    --red:#e0806e; --red-bg:#341f1b; --red-br:#5b352d;
+    --green:#66c58c; --green-bg:#142a1f; --green-br:#2c4e3a;
+    --amber:#dca94e; --amber-bg:#2c2413; --amber-br:#524226;
+  }
+  * { box-sizing: border-box; }
+  html { background: var(--paper); scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  body { margin:0; background:var(--paper); color:var(--ink); font-family:var(--sans);
+         line-height:1.55; -webkit-font-smoothing:antialiased; }
+  .wrap { max-width:1040px; margin:0 auto; padding:0 26px; }
+  .eyebrow { font-family:var(--mono); font-size:12px; letter-spacing:0.15em; text-transform:uppercase;
+             color:var(--accent); margin:0 0 14px; }
+  h1,h2,h3,h4 { text-wrap:balance; margin:0; }
+  a { color:var(--accent-2); }
+  strong { color:var(--ink); }
+  .mono { font-family:var(--mono); }
+
+  .topnav { position:sticky; top:0; z-index:20; background:color-mix(in srgb, var(--paper) 86%, transparent);
+            backdrop-filter:blur(8px); border-bottom:1px solid var(--hair); }
+  .topnav .row { max-width:1040px; margin:0 auto; padding:11px 26px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+  .topnav .brand { font-family:var(--mono); font-weight:700; color:var(--accent); font-size:14px; letter-spacing:0.02em; }
+  .topnav nav { display:flex; gap:3px; flex-wrap:wrap; margin-left:auto; }
+  .topnav a { font-family:var(--mono); font-size:12.5px; text-decoration:none; color:var(--muted);
+              padding:4px 9px; border-radius:7px; }
+  .topnav a:hover { background:var(--accent-bg); color:var(--accent); }
+  .topnav a:focus-visible { outline:2px solid var(--accent-2); outline-offset:2px; }
+
+  header.hero { border-bottom:1px solid var(--hair);
+    background: radial-gradient(120% 150% at 88% -35%, var(--accent-bg) 0%, transparent 52%), var(--panel); }
+  .hero-inner { padding:64px 0 50px; }
+  .hero h1 { font-size:clamp(32px,5vw,56px); font-weight:830; letter-spacing:-0.026em; line-height:1.03; max-width:20ch; }
+  .hero p.lede { font-size:clamp(16px,1.9vw,20px); color:var(--muted); max-width:64ch; margin:22px 0 0; }
+  .counts { display:flex; flex-wrap:wrap; gap:13px; margin-top:34px; }
+  .count { background:var(--panel); border:1px solid var(--hair); border-radius:14px; padding:15px 20px;
+           display:flex; flex-direction:column; gap:3px; min-width:150px; max-width:230px; }
+  .count b { font-family:var(--mono); font-variant-numeric:tabular-nums; font-size:30px; font-weight:700;
+             line-height:1; letter-spacing:-0.02em; color:var(--accent); }
+  .count span { font-size:12.5px; color:var(--muted); line-height:1.35; }
+  .count.hl { border-color:var(--amber-br); background:var(--amber-bg); }
+  .count.hl b { color:var(--amber); }
+
+  section { padding:56px 0; border-bottom:1px solid var(--hair); scroll-margin-top:58px; }
+  .sec-head { max-width:70ch; margin-bottom:26px; }
+  .sec-head h2 { font-size:clamp(23px,3vw,32px); font-weight:800; letter-spacing:-0.018em; }
+  .sec-head p.take { color:var(--ink); font-size:16px; font-weight:600; margin:11px 0 0; line-height:1.45; max-width:64ch; }
+  .blist { margin:22px 0 0; padding-left:20px; max-width:70ch; }
+  .blist li { font-size:15.5px; color:var(--muted); margin:9px 0; line-height:1.5; }
+  .blist li b { color:var(--ink); font-weight:660; }
+
+  /* figure: sits on the paper ground so the white plot panels pop */
+  .fig { max-width:760px; margin:6px auto 0; }
+  .fig svg { width:100%; height:auto; display:block; }
+
+  .two { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:24px; }
+  .card { background:var(--panel); border:1px solid var(--hair); border-radius:16px; padding:20px 22px; }
+  .card.good { border-top:4px solid var(--green); }
+  .card.accent { border-top:4px solid var(--amber); }
+  .card h4 { font-size:15.5px; margin-bottom:11px; }
+  .card h4 .tag { font-family:var(--mono); font-size:11px; font-weight:700; padding:2px 7px; border-radius:6px; margin-right:8px; }
+  .card.good h4 .tag { background:var(--green-bg); color:var(--green); }
+  .card.accent h4 .tag { background:var(--amber-bg); color:var(--amber); }
+  .card ul { margin:0; padding-left:18px; }
+  .card li { font-size:14px; color:var(--muted); margin:7px 0; line-height:1.45; }
+  .card li b { color:var(--ink); font-weight:640; }
+
+  .callout { background:var(--accent-bg); border:1px solid var(--accent-br); border-left:5px solid var(--accent);
+             border-radius:14px; padding:20px 24px; max-width:84ch; margin:0 auto; }
+  .callout .lbl { font-family:var(--mono); font-size:11.5px; letter-spacing:0.13em; text-transform:uppercase;
+                  color:var(--accent); margin:0 0 8px; }
+  .callout h4 { font-size:18px; font-weight:770; margin:0 0 9px; }
+  .callout p { font-size:14.5px; color:var(--muted); margin:0; line-height:1.55; }
+  .quote { border-left:4px solid var(--amber); padding:6px 0 6px 18px; font-size:clamp(18px,2.3vw,22px);
+           font-weight:640; color:var(--ink); max-width:52ch; line-height:1.35; margin:26px auto 0; }
+  .pull { font-family:var(--mono); font-size:14px; color:var(--amber); border-left:3px solid var(--amber-br);
+          padding-left:14px; line-height:1.55; margin:24px 0 0; max-width:74ch; }
+  .pull b { color:var(--ink); }
+
+  footer { padding:40px 0 66px; color:var(--faint); font-size:13.5px; }
+  footer a { color:var(--accent-2); }
+
+  .reveal { opacity:1; transform:none; }
+  body.anim .reveal { opacity:0; transform:translateY(14px); transition:opacity .6s ease, transform .6s ease; }
+  body.anim .reveal.in { opacity:1; transform:none; }
+  @media (prefers-reduced-motion: reduce) { body.anim .reveal { opacity:1; transform:none; transition:none; } }
+
+  @media (max-width:820px) { .two { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+
+<div class="topnav"><div class="row">
+  <span class="brand">encoding · the mechanism</span>
+  <nav>
+    <a href="#signal">signal</a>
+    <a href="#swap">swap</a>
+    <a href="#form">form</a>
+    <a href="#find">find</a>
+    <a href="#when">when</a>
+  </nav>
+</div></div>
+
+<header class="hero"><div class="wrap hero-inner">
+  <p class="eyebrow">Numeric encoding · the mechanism</p>
+  <h1>Why encoding a scalar can beat feeding the raw number.</h1>
+  <p class="lede">An 8-dimensional nonlinear encoding lets a model read <em>where</em> a value sits on its axis, not just <em>how big</em> it is. That unlocks two things a raw / log / standardized scalar can't give — and it tells you exactly when the extra dimensions are worth it.</p>
+  <div class="counts">
+    <div class="count"><b>2</b><span>independent obstacles a basis relieves</span></div>
+    <div class="count"><b>1&nbsp;→&nbsp;8</b><span>scalar to nonlinear projection</span></div>
+    <div class="count hl"><b>+0.39</b><span>PR-AUC a free-nonlinearity MLP still gains from a basis on a sharp target</span></div>
+  </div>
+</div></header>
+
+<section id="signal"><div class="wrap">
+  <div class="sec-head">
+    <p class="eyebrow">The setup</p>
+    <h2>It hinges on the shape of the target, not the model.</h2>
+    <p class="take">A basis earns its keep only when the risk lives in a specific place on the value axis — not when it merely tracks magnitude.</p>
+  </div>
+  <div class="fig reveal">
+<!-- FIG1 -->
+<svg viewBox="0 0 660 250" xmlns="http://www.w3.org/2000/svg" font-family="var(--sans)" role="img">
+<rect x="24.0" y="56.0" width="258.0" height="150.0" rx="10" fill="var(--panel)" stroke="var(--hair)" stroke-width="1.2"/>
+<text x="36.0" y="36.0" font-size="13.5" fill="var(--ink)" text-anchor="start" font-weight="bold" font-family="var(--mono)">smooth / monotone</text>
+<text x="36.0" y="52.0" font-size="12" fill="var(--muted)" text-anchor="start" font-weight="normal">risk tracks magnitude</text>
+<text x="276.0" y="224.0" font-size="11" fill="var(--faint)" text-anchor="end" font-weight="normal">feature value →</text>
+<text x="30.0" y="68.0" font-size="11" fill="var(--faint)" text-anchor="start" font-weight="normal">risk</text>
+<polyline points="30.0,198.2 33.8,198.1 37.7,198.0 41.5,197.9 45.4,197.8 49.2,197.6 53.1,197.4 56.9,197.2 60.8,196.9 64.6,196.6 68.4,196.2 72.3,195.7 76.1,195.2 80.0,194.6 83.8,193.8 87.7,193.0 91.5,192.0 95.3,190.8 99.2,189.4 103.0,187.9 106.9,186.0 110.7,183.9 114.6,181.6 118.4,178.9 122.2,175.8 126.1,172.4 129.9,168.6 133.8,164.4 137.6,159.9 141.5,155.1 145.3,149.9 149.2,144.5 153.0,139.0 156.8,133.3 160.7,127.6 164.5,122.0 168.4,116.5 172.2,111.3 176.1,106.3 179.9,101.6 183.8,97.3 187.6,93.3 191.4,89.7 195.3,86.5 199.1,83.6 203.0,81.1 206.8,78.9 210.7,76.9 214.5,75.3 218.3,73.8 222.2,72.5 226.0,71.5 229.9,70.5 233.7,69.8 237.6,69.1 241.4,68.5 245.2,68.0 249.1,67.6 252.9,67.3 256.8,67.0 260.6,66.7 264.5,66.5 268.3,66.3 272.2,66.2 276.0,66.0" fill="none" stroke="var(--accent)" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="378.0" y="56.0" width="258.0" height="150.0" rx="10" fill="var(--panel)" stroke="var(--hair)" stroke-width="1.2"/>
+<text x="390.0" y="36.0" font-size="13.5" fill="var(--ink)" text-anchor="start" font-weight="bold" font-family="var(--mono)">localized (sharp)</text>
+<text x="390.0" y="52.0" font-size="12" fill="var(--muted)" text-anchor="start" font-weight="normal">risk in a narrow band</text>
+<text x="630.0" y="224.0" font-size="11" fill="var(--faint)" text-anchor="end" font-weight="normal">feature value →</text>
+<text x="384.0" y="68.0" font-size="11" fill="var(--faint)" text-anchor="start" font-weight="normal">risk</text>
+<polygon points="384.0,196.0 384.0,196.0 386.1,196.0 388.1,196.0 390.1,196.0 392.2,196.0 394.2,196.0 396.3,196.0 398.4,196.0 400.4,196.0 402.4,196.0 404.5,196.0 406.6,196.0 408.6,196.0 410.6,196.0 412.7,196.0 414.8,196.0 416.8,196.0 418.9,196.0 420.9,196.0 422.9,196.0 425.0,196.0 427.1,196.0 429.1,196.0 431.1,196.0 433.2,196.0 435.2,196.0 437.3,196.0 439.4,196.0 441.4,196.0 443.4,196.0 445.5,196.0 447.6,196.0 449.6,196.0 451.6,196.0 453.7,196.0 455.8,196.0 457.8,196.0 459.9,196.0 461.9,196.0 463.9,196.0 466.0,196.0 468.1,196.0 470.1,196.0 472.1,196.0 474.2,196.0 476.2,196.0 478.3,196.0 480.4,196.0 482.4,196.0 484.4,195.9 486.5,195.8 488.6,195.6 490.6,195.0 492.6,193.7 494.7,191.2 496.8,186.7 498.8,179.4 500.9,168.3 502.9,153.1 504.9,134.3 507.0,113.5 509.1,93.5 511.1,77.6 513.1,69.0 515.2,69.4 517.2,78.6 519.3,94.9 521.4,115.1 523.4,135.9 525.5,154.4 527.5,169.3 529.5,180.1 531.6,187.2 533.6,191.4 535.7,193.8 537.8,195.0 539.8,195.6 541.9,195.8 543.9,195.9 546.0,196.0 548.0,196.0 550.0,196.0 552.1,196.0 554.1,196.0 556.2,196.0 558.2,196.0 560.3,196.0 562.4,196.0 564.4,196.0 566.5,196.0 568.5,196.0 570.5,196.0 572.6,196.0 574.6,196.0 576.7,196.0 578.8,196.0 580.8,196.0 582.9,196.0 584.9,196.0 587.0,196.0 589.0,196.0 591.0,196.0 593.1,196.0 595.1,196.0 597.2,196.0 599.2,196.0 601.3,196.0 603.4,196.0 605.4,196.0 607.5,196.0 609.5,196.0 611.5,196.0 613.6,196.0 615.6,196.0 617.7,196.0 619.8,196.0 621.8,196.0 623.9,196.0 625.9,196.0 628.0,196.0 630.0,196.0 630.0,196.0" fill="var(--amber-bg)" stroke="none"/>
+<polyline points="384.0,196.0 386.1,196.0 388.1,196.0 390.1,196.0 392.2,196.0 394.2,196.0 396.3,196.0 398.4,196.0 400.4,196.0 402.4,196.0 404.5,196.0 406.6,196.0 408.6,196.0 410.6,196.0 412.7,196.0 414.8,196.0 416.8,196.0 418.9,196.0 420.9,196.0 422.9,196.0 425.0,196.0 427.1,196.0 429.1,196.0 431.1,196.0 433.2,196.0 435.2,196.0 437.3,196.0 439.4,196.0 441.4,196.0 443.4,196.0 445.5,196.0 447.6,196.0 449.6,196.0 451.6,196.0 453.7,196.0 455.8,196.0 457.8,196.0 459.9,196.0 461.9,196.0 463.9,196.0 466.0,196.0 468.1,196.0 470.1,196.0 472.1,196.0 474.2,196.0 476.2,196.0 478.3,196.0 480.4,196.0 482.4,196.0 484.4,195.9 486.5,195.8 488.6,195.6 490.6,195.0 492.6,193.7 494.7,191.2 496.8,186.7 498.8,179.4 500.9,168.3 502.9,153.1 504.9,134.3 507.0,113.5 509.1,93.5 511.1,77.6 513.1,69.0 515.2,69.4 517.2,78.6 519.3,94.9 521.4,115.1 523.4,135.9 525.5,154.4 527.5,169.3 529.5,180.1 531.6,187.2 533.6,191.4 535.7,193.8 537.8,195.0 539.8,195.6 541.9,195.8 543.9,195.9 546.0,196.0 548.0,196.0 550.0,196.0 552.1,196.0 554.1,196.0 556.2,196.0 558.2,196.0 560.3,196.0 562.4,196.0 564.4,196.0 566.5,196.0 568.5,196.0 570.5,196.0 572.6,196.0 574.6,196.0 576.7,196.0 578.8,196.0 580.8,196.0 582.9,196.0 584.9,196.0 587.0,196.0 589.0,196.0 591.0,196.0 593.1,196.0 595.1,196.0 597.2,196.0 599.2,196.0 601.3,196.0 603.4,196.0 605.4,196.0 607.5,196.0 609.5,196.0 611.5,196.0 613.6,196.0 615.6,196.0 617.7,196.0 619.8,196.0 621.8,196.0 623.9,196.0 625.9,196.0 628.0,196.0 630.0,196.0" fill="none" stroke="var(--amber)" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="514.1" y1="196.0" x2="514.1" y2="208.0" stroke="var(--amber)" stroke-width="1.4"/>
+<text x="514.1" y="222.0" font-size="10.5" fill="var(--amber)" text-anchor="middle" font-weight="normal" font-family="var(--mono)">the band</text>
+<text x="330.0" y="238.0" font-size="13" fill="var(--muted)" text-anchor="middle" font-weight="normal" font-style="italic">A scalar answers “how big?”  —  only the needle needs “exactly where?”</text>
+</svg>
+  </div>
+  <ul class="blist">
+    <li><b>Smooth / monotone</b> — risk rises or falls gradually with the value; every value carries a little signal. One well-conditioned number is enough.</li>
+    <li><b>Localized (sharp)</b> — risk spikes only inside a narrow band and is flat elsewhere. Now the model must know <em>exactly where</em> the value falls, not just how big it is.</li>
+    <li>The single property that governs everything downstream is <b>how localized the risk is</b> — a needle, not a hump.</li>
+  </ul>
+</div></section>
+
+<section id="swap"><div class="wrap">
+  <div class="sec-head">
+    <p class="eyebrow">The core idea</p>
+    <h2>A scalar keeps “how big” and throws away “where”.</h2>
+    <p class="take">An encoding swaps magnitude for position — it reports which region of the value axis you're in.</p>
+  </div>
+  <div class="fig reveal">
+<!-- FIG2 -->
+<svg viewBox="0 0 660 300" xmlns="http://www.w3.org/2000/svg" font-family="var(--sans)" role="img">
+<text x="330.0" y="30.0" font-size="14" fill="var(--ink)" text-anchor="middle" font-weight="bold">One point on the value axis — two ways to read it</text>
+<line x1="60.0" y1="66.0" x2="600.0" y2="66.0" stroke="var(--ink)" stroke-width="1.6"/>
+<line x1="60.0" y1="61.0" x2="60.0" y2="71.0" stroke="var(--faint)" stroke-width="1.2"/>
+<line x1="127.5" y1="61.0" x2="127.5" y2="71.0" stroke="var(--faint)" stroke-width="1.2"/>
+<line x1="195.0" y1="61.0" x2="195.0" y2="71.0" stroke="var(--faint)" stroke-width="1.2"/>
+<line x1="262.5" y1="61.0" x2="262.5" y2="71.0" stroke="var(--faint)" stroke-width="1.2"/>
+<line x1="330.0" y1="61.0" x2="330.0" y2="71.0" stroke="var(--faint)" stroke-width="1.2"/>
+<line x1="397.5" y1="61.0" x2="397.5" y2="71.0" stroke="var(--faint)" stroke-width="1.2"/>
+<line x1="465.0" y1="61.0" x2="465.0" y2="71.0" stroke="var(--faint)" stroke-width="1.2"/>
+<line x1="532.5" y1="61.0" x2="532.5" y2="71.0" stroke="var(--faint)" stroke-width="1.2"/>
+<line x1="600.0" y1="61.0" x2="600.0" y2="71.0" stroke="var(--faint)" stroke-width="1.2"/>
+<text x="60.0" y="52.0" font-size="10.5" fill="var(--faint)" text-anchor="start" font-weight="normal" font-family="var(--mono)">low</text>
+<text x="600.0" y="52.0" font-size="10.5" fill="var(--faint)" text-anchor="end" font-weight="normal" font-family="var(--mono)">high</text>
+<circle cx="431.2" cy="66.0" r="6.5" fill="var(--ink)" stroke="none" stroke-width="1.0"/>
+<text x="431.2" y="50.0" font-size="13" fill="var(--ink)" text-anchor="middle" font-weight="bold" font-family="var(--mono)">x</text>
+<line x1="431.2" y1="76.0" x2="150.0" y2="150.0" stroke="var(--accent-br)" stroke-width="1.6"/>
+<polygon points="150.0,150.0 155.9,144.8 157.7,151.6" fill="var(--accent-br)"/>
+<rect x="32.0" y="150.0" width="236.0" height="78.0" rx="12" fill="var(--accent-bg)" stroke="var(--accent-br)" stroke-width="1.3"/>
+<text x="150.0" y="176.0" font-size="13" fill="var(--accent)" text-anchor="middle" font-weight="bold" font-family="var(--mono)">scalar</text>
+<text x="150.0" y="200.0" font-size="20" fill="var(--ink)" text-anchor="middle" font-weight="bold" font-family="var(--mono)">→  1.74</text>
+<text x="150.0" y="220.0" font-size="11.5" fill="var(--muted)" text-anchor="middle" font-weight="normal">one number: the magnitude</text>
+<line x1="431.2" y1="76.0" x2="500.0" y2="150.0" stroke="var(--red-br)" stroke-width="1.6"/>
+<polygon points="500.0,150.0 492.7,147.3 497.8,142.5" fill="var(--red-br)"/>
+<rect x="362.0" y="150.0" width="276.0" height="78.0" rx="12" fill="var(--red-bg)" stroke="var(--red-br)" stroke-width="1.3"/>
+<text x="500.0" y="172.0" font-size="13" fill="var(--red)" text-anchor="middle" font-weight="bold" font-family="var(--mono)">local basis</text>
+<rect x="368.0" y="184.0" width="28.0" height="22.0" rx="4" fill="var(--panel)" stroke="var(--red-br)" stroke-width="1.0"/>
+<rect x="399.0" y="184.0" width="28.0" height="22.0" rx="4" fill="var(--panel)" stroke="var(--red-br)" stroke-width="1.0"/>
+<rect x="430.0" y="184.0" width="28.0" height="22.0" rx="4" fill="var(--panel)" stroke="var(--red-br)" stroke-width="1.0"/>
+<rect x="461.0" y="184.0" width="28.0" height="22.0" rx="4" fill="var(--panel)" stroke="var(--red-br)" stroke-width="1.0"/>
+<rect x="492.0" y="184.0" width="28.0" height="22.0" rx="4" fill="var(--red-br)" stroke="var(--red-br)" stroke-width="1.0"/>
+<rect x="523.0" y="184.0" width="28.0" height="22.0" rx="4" fill="var(--red)" stroke="var(--red-br)" stroke-width="1.0"/>
+<rect x="554.0" y="184.0" width="28.0" height="22.0" rx="4" fill="var(--red-br)" stroke="var(--red-br)" stroke-width="1.0"/>
+<rect x="585.0" y="184.0" width="28.0" height="22.0" rx="4" fill="var(--panel)" stroke="var(--red-br)" stroke-width="1.0"/>
+<text x="500.0" y="222.0" font-size="11.5" fill="var(--muted)" text-anchor="middle" font-weight="normal">which region the value falls in</text>
+<text x="330.0" y="268.0" font-size="13" fill="var(--muted)" text-anchor="middle" font-weight="normal" font-style="italic">Same point. The scalar keeps the magnitude and throws away the location;</text>
+<text x="330.0" y="286.0" font-size="13" fill="var(--muted)" text-anchor="middle" font-weight="normal" font-style="italic">the basis keeps the location — which is what a localized target needs.</text>
+</svg>
+  </div>
+  <ul class="blist">
+    <li>A raw / log / standardized scalar is <b>one number: magnitude</b>. Feeding it to the model asks it to be a function of size.</li>
+    <li>A <b>local basis</b> — quantile bins (PLE), learned hinges, or RBF bumps — reports <b>which slice of the axis</b> the value lands in.</li>
+    <li>For a localized target, that location <em>is</em> the signal — which is why the basis, not the raw number, carries it.</li>
+  </ul>
+</div></section>
+
+<section id="form"><div class="wrap">
+  <div class="sec-head">
+    <p class="eyebrow">Obstacle 1</p>
+    <h2>A model that reads the value affinely can't <em>form</em> the shape.</h2>
+    <p class="take">For a linear head or a GRU gate, the per-feature function class is exactly the span of the encoding.</p>
+  </div>
+  <div class="fig reveal">
+<!-- FIG3 -->
+<svg viewBox="0 0 660 288" xmlns="http://www.w3.org/2000/svg" font-family="var(--sans)" role="img">
+<rect x="24.0" y="44.0" width="258.0" height="158.0" rx="10" fill="var(--panel)" stroke="var(--hair)" stroke-width="1.2"/>
+<text x="36.0" y="24.0" font-size="13.5" fill="var(--ink)" text-anchor="start" font-weight="bold" font-family="var(--mono)">affine read of a scalar</text>
+<text x="36.0" y="40.0" font-size="12" fill="var(--muted)" text-anchor="start" font-weight="normal">reachable = the span</text>
+<text x="276.0" y="220.0" font-size="11" fill="var(--faint)" text-anchor="end" font-weight="normal">feature value →</text>
+<text x="30.0" y="56.0" font-size="11" fill="var(--faint)" text-anchor="start" font-weight="normal"></text>
+<polyline points="32.0,170.2 274.0,60.6" fill="none" stroke="var(--faint)" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="32.0,143.8 274.0,71.2" fill="none" stroke="var(--faint)" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="32.0,117.4 274.0,91.0" fill="none" stroke="var(--faint)" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="32.0,190.0 34.4,190.0 36.8,190.0 39.3,190.0 41.7,190.0 44.1,190.0 46.5,190.0 48.9,190.0 51.4,190.0 53.8,190.0 56.2,190.0 58.6,190.0 61.0,190.0 63.5,190.0 65.9,190.0 68.3,190.0 70.7,190.0 73.1,190.0 75.6,190.0 78.0,190.0 80.4,190.0 82.8,190.0 85.2,190.0 87.7,190.0 90.1,190.0 92.5,190.0 94.9,190.0 97.3,190.0 99.8,190.0 102.2,190.0 104.6,190.0 107.0,190.0 109.4,190.0 111.9,190.0 114.3,190.0 116.7,190.0 119.1,190.0 121.5,190.0 124.0,190.0 126.4,190.0 128.8,190.0 131.2,190.0 133.6,189.9 136.1,189.7 138.5,189.2 140.9,187.9 143.3,184.9 145.7,178.9 148.2,168.3 150.6,151.8 153.0,129.6 155.4,103.9 157.8,79.7 160.3,62.9 162.7,58.2 165.1,67.0 167.5,86.7 169.9,111.9 172.4,136.9 174.8,157.5 177.2,172.1 179.6,181.2 182.0,186.1 184.5,188.4 186.9,189.4 189.3,189.8 191.7,189.9 194.1,190.0 196.6,190.0 199.0,190.0 201.4,190.0 203.8,190.0 206.2,190.0 208.7,190.0 211.1,190.0 213.5,190.0 215.9,190.0 218.3,190.0 220.8,190.0 223.2,190.0 225.6,190.0 228.0,190.0 230.4,190.0 232.9,190.0 235.3,190.0 237.7,190.0 240.1,190.0 242.5,190.0 245.0,190.0 247.4,190.0 249.8,190.0 252.2,190.0 254.6,190.0 257.1,190.0 259.5,190.0 261.9,190.0 264.3,190.0 266.7,190.0 269.2,190.0 271.6,190.0 274.0,190.0" fill="none" stroke="var(--amber)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="5 4"/>
+<text x="153.0" y="244.0" font-size="11.5" fill="var(--muted)" text-anchor="middle" font-weight="normal">monotone lines — the needle isn’t one</text>
+<rect x="378.0" y="44.0" width="258.0" height="158.0" rx="10" fill="var(--panel)" stroke="var(--hair)" stroke-width="1.2"/>
+<text x="390.0" y="24.0" font-size="13.5" fill="var(--ink)" text-anchor="start" font-weight="bold" font-family="var(--mono)">give it a local basis</text>
+<text x="390.0" y="40.0" font-size="12" fill="var(--muted)" text-anchor="start" font-weight="normal">span now includes bumps</text>
+<text x="630.0" y="220.0" font-size="11" fill="var(--faint)" text-anchor="end" font-weight="normal">feature value →</text>
+<text x="384.0" y="56.0" font-size="11" fill="var(--faint)" text-anchor="start" font-weight="normal"></text>
+<polyline points="386.0,190.0 389.0,190.0 392.1,190.0 395.1,190.0 398.1,190.0 401.1,190.0 404.1,189.9 407.2,189.8 410.2,189.7 413.2,189.4 416.2,188.9 419.3,188.1 422.3,186.8 425.3,184.7 428.4,181.5 431.4,177.1 434.4,170.9 437.4,162.8 440.4,152.7 443.5,140.7 446.5,127.1 449.5,112.6 452.6,98.3 455.6,85.2 458.6,74.5 461.6,67.3 464.6,64.3 467.7,65.9 470.7,71.9 473.7,81.6 476.8,94.1 479.8,108.2 482.8,122.7 485.8,136.6 488.9,149.2 491.9,159.9 494.9,168.6 497.9,175.4 500.9,180.3 504.0,183.8 507.0,186.2 510.0,187.8 513.0,188.7 516.1,189.3 519.1,189.6 522.1,189.8 525.1,189.9 528.2,190.0 531.2,190.0 534.2,190.0 537.2,190.0 540.3,190.0 543.3,190.0 546.3,190.0 549.4,190.0 552.4,190.0 555.4,190.0 558.4,190.0 561.5,190.0 564.5,190.0 567.5,190.0 570.5,190.0 573.5,190.0 576.6,190.0 579.6,190.0 582.6,190.0 585.6,190.0 588.7,190.0 591.7,190.0 594.7,190.0 597.8,190.0 600.8,190.0 603.8,190.0 606.8,190.0 609.9,190.0 612.9,190.0 615.9,190.0 618.9,190.0 622.0,190.0 625.0,190.0 628.0,190.0" fill="none" stroke="var(--green-br)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="386.0,190.0 389.0,190.0 392.1,190.0 395.1,190.0 398.1,190.0 401.1,190.0 404.1,190.0 407.2,190.0 410.2,190.0 413.2,190.0 416.2,190.0 419.3,190.0 422.3,190.0 425.3,190.0 428.4,190.0 431.4,190.0 434.4,190.0 437.4,190.0 440.4,190.0 443.5,190.0 446.5,190.0 449.5,190.0 452.6,190.0 455.6,189.9 458.6,189.8 461.6,189.7 464.6,189.4 467.7,188.9 470.7,188.0 473.7,186.6 476.8,184.5 479.8,181.3 482.8,176.6 485.8,170.3 488.9,162.1 491.9,151.8 494.9,139.7 497.9,126.0 500.9,111.5 504.0,97.2 507.0,84.3 510.0,73.8 513.0,66.9 516.1,64.3 519.1,66.2 522.1,72.5 525.1,82.5 528.2,95.1 531.2,109.3 534.2,123.8 537.2,137.6 540.3,150.1 543.3,160.7 546.3,169.2 549.4,175.8 552.4,180.6 555.4,184.1 558.4,186.4 561.5,187.9 564.5,188.8 567.5,189.3 570.5,189.6 573.5,189.8 576.6,189.9 579.6,190.0 582.6,190.0 585.6,190.0 588.7,190.0 591.7,190.0 594.7,190.0 597.8,190.0 600.8,190.0 603.8,190.0 606.8,190.0 609.9,190.0 612.9,190.0 615.9,190.0 618.9,190.0 622.0,190.0 625.0,190.0 628.0,190.0" fill="none" stroke="var(--red-br)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="386.0,190.0 389.0,190.0 392.1,190.0 395.1,190.0 398.1,190.0 401.1,190.0 404.1,190.0 407.2,190.0 410.2,190.0 413.2,190.0 416.2,190.0 419.3,190.0 422.3,190.0 425.3,190.0 428.4,190.0 431.4,190.0 434.4,190.0 437.4,190.0 440.4,190.0 443.5,190.0 446.5,190.0 449.5,190.0 452.6,190.0 455.6,190.0 458.6,190.0 461.6,190.0 464.6,190.0 467.7,190.0 470.7,190.0 473.7,190.0 476.8,190.0 479.8,190.0 482.8,190.0 485.8,190.0 488.9,190.0 491.9,190.0 494.9,190.0 497.9,190.0 500.9,190.0 504.0,190.0 507.0,189.9 510.0,189.8 513.0,189.7 516.1,189.4 519.1,188.8 522.1,187.9 525.1,186.5 528.2,184.3 531.2,181.0 534.2,176.2 537.2,169.8 540.3,161.4 543.3,151.0 546.3,138.7 549.4,124.9 552.4,110.4 555.4,96.2 558.4,83.4 561.5,73.1 564.5,66.6 567.5,64.3 570.5,66.6 573.5,73.1 576.6,83.4 579.6,96.2 582.6,110.4 585.6,124.9 588.7,138.7 591.7,151.0 594.7,161.4 597.8,169.8 600.8,176.2 603.8,181.0 606.8,184.3 609.9,186.5 612.9,187.9 615.9,188.8 618.9,189.4 622.0,189.7 625.0,189.8 628.0,189.9" fill="none" stroke="var(--green-br)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="386.0,190.0 388.4,190.0 390.8,190.0 393.3,190.0 395.7,190.0 398.1,190.0 400.5,190.0 402.9,190.0 405.4,190.0 407.8,190.0 410.2,190.0 412.6,190.0 415.0,190.0 417.5,190.0 419.9,190.0 422.3,190.0 424.7,190.0 427.1,190.0 429.6,190.0 432.0,190.0 434.4,190.0 436.8,190.0 439.2,190.0 441.7,190.0 444.1,190.0 446.5,190.0 448.9,190.0 451.3,190.0 453.8,190.0 456.2,190.0 458.6,190.0 461.0,190.0 463.4,190.0 465.9,190.0 468.3,190.0 470.7,190.0 473.1,190.0 475.5,190.0 478.0,190.0 480.4,190.0 482.8,190.0 485.2,190.0 487.6,189.9 490.1,189.7 492.5,189.2 494.9,187.9 497.3,184.9 499.7,178.9 502.2,168.3 504.6,151.8 507.0,129.6 509.4,103.9 511.8,79.7 514.3,62.9 516.7,58.2 519.1,67.0 521.5,86.7 523.9,111.9 526.4,136.9 528.8,157.5 531.2,172.1 533.6,181.2 536.0,186.1 538.5,188.4 540.9,189.4 543.3,189.8 545.7,189.9 548.1,190.0 550.6,190.0 553.0,190.0 555.4,190.0 557.8,190.0 560.2,190.0 562.7,190.0 565.1,190.0 567.5,190.0 569.9,190.0 572.3,190.0 574.8,190.0 577.2,190.0 579.6,190.0 582.0,190.0 584.4,190.0 586.9,190.0 589.3,190.0 591.7,190.0 594.1,190.0 596.5,190.0 599.0,190.0 601.4,190.0 603.8,190.0 606.2,190.0 608.6,190.0 611.1,190.0 613.5,190.0 615.9,190.0 618.3,190.0 620.7,190.0 623.2,190.0 625.6,190.0 628.0,190.0" fill="none" stroke="var(--amber)" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="507.0" y="244.0" font-size="11.5" fill="var(--muted)" text-anchor="middle" font-weight="normal">weighted sum of local bumps = the needle</text>
+<text x="330.0" y="274.0" font-size="12.5" fill="var(--muted)" text-anchor="middle" font-weight="normal" font-style="italic">One number spans a line; a basis spans bumps.</text>
+</svg>
+  </div>
+  <ul class="blist">
+    <li>An <b>affine read</b> — <span class="mono">W · e(x)</span> before a fixed gate — can only produce shapes the encoding <b>spans</b>.</li>
+    <li>One scalar spans a single monotone line. A <b>non-monotone or localized</b> target isn't in that span, at any weight.</li>
+    <li>A <b>local basis</b> widens the span to include bumps, so a weighted sum reproduces the needle. This is why a basis helps affine-read models on <em>any</em> non-log-linear shape.</li>
+  </ul>
+</div></section>
+
+<section id="find"><div class="wrap">
+  <div class="sec-head">
+    <p class="eyebrow">Obstacle 2</p>
+    <h2>Even a model that <em>could</em> form it can't find it by SGD.</h2>
+    <p class="take">A free-nonlinearity MLP can represent any 1-D shape — but gradient descent can't locate a needle from a bare scalar.</p>
+  </div>
+  <div class="fig reveal">
+<!-- FIG4 -->
+<svg viewBox="0 0 660 288" xmlns="http://www.w3.org/2000/svg" font-family="var(--sans)" role="img">
+<rect x="24.0" y="44.0" width="258.0" height="158.0" rx="10" fill="var(--panel)" stroke="var(--hair)" stroke-width="1.2"/>
+<text x="36.0" y="24.0" font-size="13.5" fill="var(--ink)" text-anchor="start" font-weight="bold" font-family="var(--mono)">loss vs. where to place it</text>
+<text x="36.0" y="40.0" font-size="12" fill="var(--muted)" text-anchor="start" font-weight="normal">flat, except at the answer</text>
+<text x="276.0" y="220.0" font-size="11" fill="var(--faint)" text-anchor="end" font-weight="normal">candidate location →</text>
+<text x="30.0" y="56.0" font-size="11" fill="var(--faint)" text-anchor="start" font-weight="normal">loss</text>
+<polyline points="32.0,64.3 33.7,64.3 35.5,64.3 37.2,64.3 38.9,64.3 40.6,64.3 42.4,64.3 44.1,64.3 45.8,64.3 47.6,64.3 49.3,64.3 51.0,64.3 52.7,64.3 54.5,64.3 56.2,64.3 57.9,64.3 59.7,64.3 61.4,64.3 63.1,64.3 64.8,64.3 66.6,64.3 68.3,64.3 70.0,64.3 71.8,64.3 73.5,64.3 75.2,64.3 76.9,64.3 78.7,64.3 80.4,64.3 82.1,64.3 83.9,64.3 85.6,64.3 87.3,64.3 89.0,64.3 90.8,64.3 92.5,64.3 94.2,64.3 96.0,64.3 97.7,64.3 99.4,64.3 101.1,64.3 102.9,64.3 104.6,64.3 106.3,64.3 108.1,64.3 109.8,64.3 111.5,64.3 113.2,64.3 115.0,64.3 116.7,64.3 118.4,64.3 120.2,64.3 121.9,64.3 123.6,64.3 125.3,64.3 127.1,64.3 128.8,64.3 130.5,64.3 132.3,64.3 134.0,64.3 135.7,64.3 137.4,64.4 139.2,64.5 140.9,64.8 142.6,65.5 144.4,66.9 146.1,69.5 147.8,74.0 149.5,81.3 151.3,91.8 153.0,106.0 154.7,123.1 156.5,141.6 158.2,159.0 159.9,172.4 161.6,179.3 163.4,178.4 165.1,169.8 166.8,155.2 168.6,137.3 170.3,118.9 172.0,102.4 173.7,89.1 175.5,79.3 177.2,72.8 178.9,68.8 180.7,66.5 182.4,65.3 184.1,64.7 185.8,64.5 187.6,64.3 189.3,64.3 191.0,64.3 192.8,64.3 194.5,64.3 196.2,64.3 197.9,64.3 199.7,64.3 201.4,64.3 203.1,64.3 204.9,64.3 206.6,64.3 208.3,64.3 210.0,64.3 211.8,64.3 213.5,64.3 215.2,64.3 217.0,64.3 218.7,64.3 220.4,64.3 222.1,64.3 223.9,64.3 225.6,64.3 227.3,64.3 229.1,64.3 230.8,64.3 232.5,64.3 234.2,64.3 236.0,64.3 237.7,64.3 239.4,64.3 241.2,64.3 242.9,64.3 244.6,64.3 246.3,64.3 248.1,64.3 249.8,64.3 251.5,64.3 253.3,64.3 255.0,64.3 256.7,64.3 258.4,64.3 260.2,64.3 261.9,64.3 263.6,64.3 265.4,64.3 267.1,64.3 268.8,64.3 270.5,64.3 272.3,64.3 274.0,64.3" fill="none" stroke="var(--muted)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="87.8" cy="57.3" r="7.0" fill="var(--red)" stroke="none" stroke-width="1.0"/>
+<line x1="99.8" y1="57.3" x2="133.8" y2="57.3" stroke="var(--red)" stroke-width="2.0"/>
+<polygon points="133.8,57.3 126.8,60.8 126.8,53.8" fill="var(--red)"/>
+<text x="117.8" y="49.3" font-size="10.5" fill="var(--red)" text-anchor="middle" font-weight="normal" font-family="var(--mono)">no slope</text>
+<text x="153.0" y="244.0" font-size="11.5" fill="var(--muted)" text-anchor="middle" font-weight="normal">SGD has nothing to follow — it wanders</text>
+<rect x="378.0" y="44.0" width="258.0" height="158.0" rx="10" fill="var(--panel)" stroke="var(--hair)" stroke-width="1.2"/>
+<text x="390.0" y="24.0" font-size="13.5" fill="var(--ink)" text-anchor="start" font-weight="bold" font-family="var(--mono)">with a pre-placed basis</text>
+<text x="390.0" y="40.0" font-size="12" fill="var(--muted)" text-anchor="start" font-weight="normal">the target is a bowl</text>
+<text x="630.0" y="220.0" font-size="11" fill="var(--faint)" text-anchor="end" font-weight="normal">basis weight →</text>
+<text x="384.0" y="56.0" font-size="11" fill="var(--faint)" text-anchor="start" font-weight="normal">loss</text>
+<polyline points="386.0,57.9 388.4,62.6 390.8,67.1 393.3,71.6 395.7,76.0 398.1,80.3 400.5,84.5 402.9,88.6 405.4,92.6 407.8,96.6 410.2,100.4 412.6,104.2 415.0,107.8 417.5,111.4 419.9,114.9 422.3,118.2 424.7,121.5 427.1,124.7 429.6,127.9 432.0,130.9 434.4,133.8 436.8,136.7 439.2,139.4 441.7,142.1 444.1,144.7 446.5,147.1 448.9,149.5 451.3,151.8 453.8,154.0 456.2,156.2 458.6,158.2 461.0,160.1 463.4,162.0 465.9,163.7 468.3,165.4 470.7,167.0 473.1,168.5 475.5,169.9 478.0,171.2 480.4,172.4 482.8,173.5 485.2,174.5 487.6,175.5 490.1,176.3 492.5,177.1 494.9,177.8 497.3,178.4 499.7,178.8 502.2,179.2 504.6,179.6 507.0,179.8 509.4,179.9 511.8,179.9 514.3,179.9 516.7,179.7 519.1,179.5 521.5,179.2 523.9,178.8 526.4,178.3 528.8,177.7 531.2,177.0 533.6,176.2 536.0,175.3 538.5,174.4 540.9,173.3 543.3,172.2 545.7,171.0 548.1,169.7 550.6,168.2 553.0,166.7 555.4,165.2 557.8,163.5 560.2,161.7 562.7,159.8 565.1,157.9 567.5,155.8 569.9,153.7 572.3,151.5 574.8,149.2 577.2,146.8 579.6,144.3 582.0,141.7 584.4,139.0 586.9,136.2 589.3,133.4 591.7,130.4 594.1,127.4 596.5,124.3 599.0,121.0 601.4,117.7 603.8,114.3 606.2,110.8 608.6,107.3 611.1,103.6 613.5,99.8 615.9,96.0 618.3,92.0 620.7,88.0 623.2,83.9 625.6,79.6 628.0,75.3" fill="none" stroke="var(--green)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="586.1" cy="74.0" r="7.0" fill="var(--green)" stroke="none" stroke-width="1.0"/>
+<line x1="576.8" y1="88.0" x2="530.3" y2="172.0" stroke="var(--green)" stroke-width="2.0"/>
+<polygon points="530.3,172.0 530.6,164.2 536.7,167.6" fill="var(--green)"/>
+<text x="507.0" y="244.0" font-size="11.5" fill="var(--muted)" text-anchor="middle" font-weight="normal">gradient points home</text>
+<text x="330.0" y="274.0" font-size="12.5" fill="var(--muted)" text-anchor="middle" font-weight="normal" font-style="italic">A quantile basis hands over the location instead of making SGD search for it.</text>
+</svg>
+  </div>
+  <ul class="blist">
+    <li>The MLP <b>can represent</b> a sharp bump (universal approximation). Representability isn't the problem.</li>
+    <li><b>Optimization is.</b> The loss over “where to put the bump” is flat everywhere except at the needle — no slope for SGD to follow, so it never lands there.</li>
+    <li>A <b>fixed quantile basis</b> hands over the location: the bins already carve the axis where the spike lives, turning “find the needle” into “read the right bin”.</li>
+    <li>This is why a basis helps <em>even a free-nonlinearity model</em> — but only for a sharp target. It is the study's refutation of the older “architecture law”.</li>
+  </ul>
+</div></section>
+
+<section id="localization"><div class="wrap">
+  <div class="callout reveal">
+    <p class="lbl">The one account</p>
+    <h4>Form and find are two faces of the same thing: localization.</h4>
+    <p>A basis helps when the model can't <b>form</b> the shape (it isn't in the span) <em>or</em> can't <b>find</b> it by SGD (the loss is flat except at the needle). Both are ways of saying the signal lives at a specific place — and the encoding pre-supplies the places.</p>
+  </div>
+  <blockquote class="quote reveal">A basis pre-carves the value axis into local regions, so the model reads off <em>which region</em> — instead of bending one number into the right shape, or hunting for a needle in the dark.</blockquote>
+</div></section>
+
+<section id="when"><div class="wrap">
+  <div class="sec-head">
+    <p class="eyebrow">The payoff</p>
+    <h2>When to reach for a basis — and when not to.</h2>
+    <p class="take">Match the encoding to the shape of the risk, not to the type of model.</p>
+  </div>
+  <div class="fig reveal">
+<!-- FIG5 -->
+<svg viewBox="0 0 660 214" xmlns="http://www.w3.org/2000/svg" font-family="var(--sans)" role="img">
+<text x="330.0" y="30.0" font-size="15" fill="var(--ink)" text-anchor="middle" font-weight="bold">When is a scalar enough?</text>
+<rect x="40.0" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="49.7" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="59.3" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="69.0" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="78.7" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="88.3" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="98.0" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="107.7" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="117.3" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="127.0" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="136.7" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="146.3" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="156.0" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="165.7" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="175.3" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="185.0" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="194.7" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="204.3" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="214.0" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="223.7" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="233.3" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="243.0" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="252.7" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="262.3" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="272.0" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="281.7" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="291.3" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="301.0" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="310.7" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="320.3" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="330.0" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="339.7" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="349.3" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="359.0" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="368.7" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="378.3" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="388.0" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="397.7" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="407.3" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="417.0" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="426.7" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="436.3" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="446.0" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="455.7" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="465.3" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="475.0" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="484.7" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="494.3" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="504.0" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="513.7" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="523.3" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="533.0" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="542.7" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="552.3" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="562.0" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="571.7" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="581.3" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="591.0" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="600.7" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="610.3" y="70.0" width="10.3" height="30.0" rx="0" fill="var(--accent)" stroke="none" stroke-width="1.0"/>
+<rect x="40.0" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.000"/>
+<rect x="49.7" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.017"/>
+<rect x="59.3" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.034"/>
+<rect x="69.0" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.051"/>
+<rect x="78.7" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.068"/>
+<rect x="88.3" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.085"/>
+<rect x="98.0" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.102"/>
+<rect x="107.7" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.119"/>
+<rect x="117.3" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.136"/>
+<rect x="127.0" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.153"/>
+<rect x="136.7" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.169"/>
+<rect x="146.3" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.186"/>
+<rect x="156.0" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.203"/>
+<rect x="165.7" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.220"/>
+<rect x="175.3" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.237"/>
+<rect x="185.0" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.254"/>
+<rect x="194.7" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.271"/>
+<rect x="204.3" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.288"/>
+<rect x="214.0" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.305"/>
+<rect x="223.7" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.322"/>
+<rect x="233.3" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.339"/>
+<rect x="243.0" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.356"/>
+<rect x="252.7" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.373"/>
+<rect x="262.3" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.390"/>
+<rect x="272.0" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.407"/>
+<rect x="281.7" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.424"/>
+<rect x="291.3" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.441"/>
+<rect x="301.0" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.458"/>
+<rect x="310.7" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.475"/>
+<rect x="320.3" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.492"/>
+<rect x="330.0" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.508"/>
+<rect x="339.7" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.525"/>
+<rect x="349.3" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.542"/>
+<rect x="359.0" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.559"/>
+<rect x="368.7" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.576"/>
+<rect x="378.3" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.593"/>
+<rect x="388.0" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.610"/>
+<rect x="397.7" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.627"/>
+<rect x="407.3" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.644"/>
+<rect x="417.0" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.661"/>
+<rect x="426.7" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.678"/>
+<rect x="436.3" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.695"/>
+<rect x="446.0" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.712"/>
+<rect x="455.7" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.729"/>
+<rect x="465.3" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.746"/>
+<rect x="475.0" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.763"/>
+<rect x="484.7" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.780"/>
+<rect x="494.3" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.797"/>
+<rect x="504.0" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.814"/>
+<rect x="513.7" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.831"/>
+<rect x="523.3" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.847"/>
+<rect x="533.0" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.864"/>
+<rect x="542.7" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.881"/>
+<rect x="552.3" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.898"/>
+<rect x="562.0" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.915"/>
+<rect x="571.7" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.932"/>
+<rect x="581.3" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.949"/>
+<rect x="591.0" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.966"/>
+<rect x="600.7" y="70" width="10.3" height="30" fill="var(--amber)" opacity="0.983"/>
+<rect x="610.3" y="70" width="10.3" height="30" fill="var(--amber)" opacity="1.000"/>
+<rect x="40.0" y="70.0" width="580.0" height="30.0" rx="6" fill="none" stroke="var(--hair)" stroke-width="1.0"/>
+<text x="40.0" y="60.0" font-size="12" fill="var(--accent)" text-anchor="start" font-weight="bold" font-family="var(--mono)">smooth · monotone</text>
+<text x="620.0" y="60.0" font-size="12" fill="var(--amber)" text-anchor="end" font-weight="bold" font-family="var(--mono)">sharp · localized</text>
+<line x1="388.0" y1="66.0" x2="388.0" y2="108.0" stroke="var(--ink)" stroke-width="1.6" stroke-dasharray="4 3"/>
+<text x="214.0" y="130.0" font-size="13.5" fill="var(--accent)" text-anchor="middle" font-weight="bold">scalar suffices</text>
+<text x="214.0" y="148.0" font-size="11.5" fill="var(--muted)" text-anchor="middle" font-weight="normal">extra dimensions are just cost</text>
+<text x="504.0" y="130.0" font-size="13.5" fill="var(--amber)" text-anchor="middle" font-weight="bold">encode it</text>
+<text x="504.0" y="148.0" font-size="11.5" fill="var(--muted)" text-anchor="middle" font-weight="normal">relieve form and / or find</text>
+<text x="330.0" y="200.0" font-size="12" fill="var(--muted)" text-anchor="middle" font-weight="normal" font-style="italic">Affine-read models (a GRU gate, a linear head) shift the crossover left — they need the basis sooner.</text>
+</svg>
+  </div>
+  <div class="two reveal">
+    <div class="card good">
+      <h4><span class="tag">LEAVE IT A SCALAR</span></h4>
+      <ul>
+        <li><b>Monotone / log-adequate</b> risk — a basis only imports a dimensionality tax.</li>
+        <li>A <b>free-nonlinearity model on a smooth target</b> — it forms and finds the shape unaided.</li>
+        <li>When the field's risk isn't localized, the extra dimensions don't pay.</li>
+      </ul>
+    </div>
+    <div class="card accent">
+      <h4><span class="tag">ENCODE IT</span></h4>
+      <ul>
+        <li><b>Sharp / localized</b> risk — helps <em>any</em> model, even one with a free nonlinearity.</li>
+        <li><b>Smooth non-monotone</b> risk into an affine-read model — a learned projection.</li>
+        <li>A <b>GRU gate or linear head</b> reading the value directly — the crossover comes sooner.</li>
+      </ul>
+    </div>
+  </div>
+  <p class="pull reveal">Which <b>kind</b> of basis: for a needle, <b>fixed PLE</b> wins — its quantile knots are pre-placed, so there's nothing for SGD to find. For a smooth shape into an affine model, a <b>learned projection</b> wins — it finds smooth shapes fine and pays a smaller tax. In the study: a free-nonlinearity MLP jumped <b>0.13 → 0.52</b> PR-AUC on the sharp band with PLE; the affine GRU's PLE beat <span class="mono">log</span> by <b>+0.35</b> on sharp (vs a projection's +0.10), and the projection led on smooth by <b>+0.19</b>.</p>
+</div></section>
+
+<footer><div class="wrap">
+  Mechanism distilled from the consolidated synthetic study — <span class="mono">experiments/consolidated</span>, run <span class="mono">ConsolidatedFlow</span>, 8 seeds. Full write-up: <span class="mono">REPORT.md</span>. Everything decisive here is synthetic: magnitudes bound the direction of effects, not their real-world size. Source: <a href="https://github.com/chris-santiago/numeric-encoding-capacity">github.com/chris-santiago/numeric-encoding-capacity</a>.
+</div></footer>
+
+<script>
+  (function () {
+    if (!('IntersectionObserver' in window)) return;
+    document.body.classList.add('anim');
+    var io = new IntersectionObserver(function (es) {
+      es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+    }, { threshold: 0.08 });
+    document.querySelectorAll('.reveal').forEach(function (e) { io.observe(e); });
+  })();
+</script>
+</body>
+</html>
